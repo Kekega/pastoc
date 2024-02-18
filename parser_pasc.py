@@ -88,11 +88,11 @@ class Parser:
 
     def variables(self):
         vars = []
-        lista = []
+        ids_list = []
 
         funcs = []
         procs = []
-        was_colon = False
+        # was_colon = False
         # prev = None
         while self.curr.class_ != Class.BEGIN:
             if (self.curr.class_ == Class.FUNCTION):
@@ -108,10 +108,7 @@ class Parser:
 
             # print(self.curr.class_)
             if (self.curr.class_ == Class.ID):
-                # if was_colon:
-                    # raise ParsingError(str(self.curr), "Expected Type")
-                lista.append(self.curr.lexeme)
-                # print(was_colon)
+                ids_list.append(self.curr.lexeme)
                 self.eat(Class.ID)
 
             elif (self.curr.class_ == Class.COMMA):
@@ -123,7 +120,7 @@ class Parser:
 
                 if self.curr.class_ == Class.TYPE:
                     tip = self.type_()
-                    for x in lista:
+                    for x in ids_list:
                         id = Id(x)
                         vars.append(Decl(tip, id))
                     self.eat(Class.SEMICOLON)
@@ -140,21 +137,21 @@ class Parser:
                     self.eat(Class.RBRACKET)
                     self.eat(Class.OF)
                     tip = self.type_()
-                    elems = None
+                    elements = None
 
                     if self.curr.class_ == Class.SEMICOLON:
-                        for x in lista:
-                            vars.append(ArrayDecl(tip, Id(x), low, high, elems))
+                        for x in ids_list:
+                            vars.append(ArrayDecl(tip, Id(x), low, high, elements))
                         self.eat(Class.SEMICOLON)
                     elif (self.curr.class_ == Class.EQSIGN):
                         self.eat(Class.EQSIGN)
                         self.eat(Class.LPAREN)
-                        elems = self.elems()
+                        elements = self.elems()
                         self.eat(Class.RPAREN)
                         self.eat(Class.SEMICOLON)
-                        vars.append(ArrayDecl(tip, Id(lista[0]), low, high, elems))
+                        vars.append(ArrayDecl(tip, Id(ids_list[0]), low, high, elements))
 
-                lista.clear()
+                ids_list.clear()
 
         return Variables(vars), funcs, procs
 
