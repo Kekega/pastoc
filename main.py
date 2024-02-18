@@ -28,7 +28,7 @@ if __name__ == "__main__":
         text = source.read()
         lexer = Lexer(text)
         tokens = lexer.lex()
-        print([(tok.class_, tok.lexeme) for tok in tokens])
+        # print([(tok.class_, tok.lexeme) for tok in tokens])
         parser = Parser(tokens)
         ast = parser.parse()
         # print(ast)

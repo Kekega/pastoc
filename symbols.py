@@ -22,7 +22,6 @@ class Symbols:
         self.symbols[id_] = Symbol(id_, type_, scope)
 
     def get(self, id_):
-        print(self.symbols)
         if self.symbols.get(id_) == None:
             pass
         try:
@@ -61,7 +60,6 @@ class Symbolizer(Visitor):
     def visit_Program(self, parent, node):
         node.symbols = Symbols()
         for n in node.nodes:
-            print(n)
             self.visit(node, n)
 
     def visit_Decl(self, parent, node):

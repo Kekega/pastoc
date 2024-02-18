@@ -59,7 +59,6 @@ class Parser:
                 vars, _, _ = self.variables()
                 nodes.append(vars)
             elif self.curr.class_ == Class.BEGIN:
-                print('3121')
                 self.eat(Class.BEGIN)
                 nodes.append(self.block())
                 self.eat(Class.END)
@@ -175,7 +174,7 @@ class Parser:
             self.eat(Class.SEMICOLON)
             vars = []
             fs, prs = [], []
-            if (self.curr.class_ == Class.VAR):
+            if (self.curr.class_ in [Class.VAR, Class.FUNCTION, Class.PROCEDURE]):
                 self.eat(Class.VAR)
                 vars, fs, prs = self.variables()
             if not vars:
@@ -202,7 +201,7 @@ class Parser:
             self.eat(Class.SEMICOLON)
             vars = []
             fs, prs = [], []
-            if (self.curr.class_ == Class.VAR):
+            if (self.curr.class_ in [Class.VAR, Class.FUNCTION, Class.PROCEDURE]):
                 self.eat(Class.VAR)
                 vars, fs, prs = self.variables()
             if not vars:
@@ -321,11 +320,9 @@ class Parser:
             for new_proc in prs:
                 nodes.append(new_proc)
         while self.curr.class_ != Class.END:
-            print(32443243)
             if self.curr.class_ == Class.VAR:
                 self.eat(Class.VAR)
                 vars, _, _ = self.variables()
-                print(vars, 'fvdvfv')
                 nodes.append(vars)
                 ###
             # elif self.curr.class_ == Class.FUNCTION:
@@ -354,9 +351,6 @@ class Parser:
                 break
             else:
                 self.die_deriv(self.block.__name__)
-
-        print(nodes, 'nodes')
-        # raise ValueError
         return Block(nodes)
 
     def params(self):

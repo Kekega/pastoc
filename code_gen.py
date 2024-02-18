@@ -364,11 +364,7 @@ class Generator(Visitor):
             self.append(')')
 
     def visit_Block(self, parent, node):
-        print(11111111111)
-
-
         for n in node.nodes:
-            print(n)
             self.visit(node, n)
             if isinstance(n, If):
                 pass
