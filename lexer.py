@@ -1,3 +1,5 @@
+from curses.ascii import isdigit
+
 from token_class import Class
 from tokens import Token
 
@@ -7,10 +9,11 @@ class Lexer:
         self.text = text
         self.len = len(text)
         self.pos = -1
-        self.row = 1
-        self.col = 1
+        self.row = 1 
+        self.col = 1 
 
     def read_space(self):
+        # Чтение пробелов и учет перевода строки
         while self.pos + 1 < self.len and self.text[self.pos + 1].isspace():
             if self.text[self.pos + 1] == '\n':
                 self.row += 1
@@ -18,6 +21,7 @@ class Lexer:
             self.next_char()
 
     def read_int(self):
+        # Чтение цифр для формирования целого числа
         lexeme = self.text[self.pos]
         while self.pos + 1 < self.len and self.text[self.pos + 1].isdigit():
             lexeme += self.next_char()
@@ -25,6 +29,7 @@ class Lexer:
         return int(lexeme)
 
     def read_real(self):
+        # Чтение цифр для формирования вещественного числа
         lexeme = self.text[self.pos]
         while self.pos + 1 < self.len and self.text[self.pos + 1].isdigit():
             lexeme += self.next_char()
@@ -35,6 +40,7 @@ class Lexer:
         return float(lexeme)
 
     def read_number(self):
+        # Чтение цифр для формирования числа (целого или вещественного)
         lexeme = self.text[self.pos]
         while self.pos + 2 < self.len and self.text[self.pos + 1].isdigit():
             lexeme += self.next_char()
@@ -49,12 +55,14 @@ class Lexer:
             return int(lexeme)
 
     def read_char(self):
+        # Чтение одного символа
         self.pos += 1
         lexeme = self.text[self.pos]
         self.pos += 1
         return lexeme
 
     def read_string(self):
+        # Чтение строки внутри одинарных кавычек
         lexeme = ''
         while self.pos + 1 < self.len and self.text[self.pos + 1] != '\'':
             lexeme += self.next_char()
@@ -62,6 +70,7 @@ class Lexer:
         return lexeme
 
     def read_keyword(self):
+        # Чтение ключевых слов
         lexeme = self.text[self.pos]
         while self.pos + 1 < self.len and self.text[self.pos + 1].isalnum() or self.text[self.pos + 1] == '_':
             lexeme += self.next_char()
@@ -101,8 +110,6 @@ class Lexer:
             return Token(Class.OF, lexeme, self.row, self.col)
         elif lexeme == 'then':
             return Token(Class.THEN, lexeme, self.row, self.col)
-        # elif lexeme == 'exit':
-        #     return Token(Class.EXIT, lexeme, self.row, self.col)
         elif lexeme == 'mod':
             return Token(Class.MOD, lexeme, self.row, self.col)
         elif lexeme == 'div':
@@ -139,10 +146,12 @@ class Lexer:
             return Token(Class.FALSE, lexeme, self.row, self.col)
         elif lexeme == 'true' or lexeme == 'false':
             return Token(Class.BOOLEAN, lexeme, self.row, self.col)
-
+        if isdigit(lexeme[0]):
+            raise ValueError("Variable names can not start with digits: {lexeme}, ({self.row}, {self.col})")
         return Token(Class.ID, lexeme, self.row, self.col)
 
     def next_char(self):
+        # Переход к следующему символу
         self.pos += 1
         self.col += 1
         if self.pos >= self.len:
@@ -150,6 +159,7 @@ class Lexer:
         return self.text[self.pos]
 
     def next_token(self):
+        # Получение следующего токена
         self.read_space()
         curr = self.next_char()
         if curr is None:
@@ -248,4 +258,5 @@ class Lexer:
         return tokens
 
     def die(self, char):
-        raise SystemExit(f"Unexpected character: {char}. (row:{self.row}, col:{self.col})")
+        # Обработка ошибки некорректного символа
+        raise ValueError(f"Unexpected character: {char}. (row:{self.row}, col:{self.col})")

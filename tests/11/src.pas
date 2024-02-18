@@ -1,41 +1,41 @@
 var
-	a, b, c : array[1..100] of integer;
-	n, ai, bi, ci, i: integer;
+  numbersA, numbersB, numbersC: array[1..100] of integer;
+  size, indexA, indexB, indexC, i: integer;
 
 begin
-    bi := 1;
-	ci := 1;
+  indexB := 1;
+  indexC := 1;
 
-	readln(n);
-	
-	for ai := 1 to n do
-	begin
-		read(a[ai]);
-	end;
+  readln(size);
 
-	for ai := 1 to n do
-	begin
-		if a[ai] mod 2 = 0 then
-		begin
-			b[bi] := a[ai];
-			bi := bi + 1;
-		end
-		else
-		begin
-			c[ci] := a[ai];
-			ci := ci + 1;
-		end;
-	end;
+  for indexA := 1 to size do
+  begin
+    read(numbersA[indexA]);
+  end;
 
-	for i := 1 to bi - 1 do
-	begin
-		write(b[i], ' ');
-	end;
+  for indexA := 1 to size do
+  begin
+    if numbersA[indexA] mod 2 = 0 then
+    begin
+      numbersB[indexB] := numbersA[indexA];
+      indexB := indexB + 1;
+    end
+    else
+    begin
+      numbersC[indexC] := numbersA[indexA];
+      indexC := indexC + 1;
+    end;
+  end;
 
-	writeln();
+  for i := 1 to indexB - 1 do
+  begin
+    write(numbersB[i], ' ');
+  end;
 
-	for i := 1 to ci - 1 do
-	begin
-		write(c[i], ' ');
-	end;
+  writeln();
+
+  for i := 1 to indexC - 1 do
+  begin
+    write(numbersC[i], ' ');
+  end;
 end.

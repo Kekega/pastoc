@@ -10,12 +10,14 @@ int main() {
 	printf("\n");
 	}
 int f1(int a){
-	int _resd8ae60b8;
+	int _res42431106;
 	int f2(int b){
-		int _res61daf5c5;
-		_res61daf5c5 = b+1;
-		return _res61daf5c5;
+		int _resf07a2332;
+		_resf07a2332 = b+1;
+		return _resf07a2332;
 		};
-	_resd8ae60b8 = f2(a);
-	return _resd8ae60b8;
+	for (i = 1;i<=5;i++){
+		_res42431106 = a+1;
+		}
+	return _res42431106;
 	}

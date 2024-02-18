@@ -1,19 +1,25 @@
 class Node():
+    # Базовый класс для всех узлов абстрактного синтаксического дерева (AST).
     pass
 
 
 class Program(Node):
+    # Класс, представляющий узел программы в AST. Содержит список дочерних узлов (nodes).
     def __init__(self, nodes):
         self.nodes = nodes
 
 
 class Decl(Node):
+    # Класс для узла объявления переменной с типом (Decl). 
+    # Содержит информацию о типе и идентификаторе.
     def __init__(self, type_, id_):
         self.type_ = type_
         self.id_ = id_
 
 
 class ArrayDecl(Node):
+    # Класс для узла объявления массива (ArrayDecl). 
+    # Содержит информацию о типе, идентификаторе, границах и элементах массива.
     def __init__(self, type_, id_, low, high, elems):
         self.type_ = type_
         self.id_ = id_
@@ -25,18 +31,24 @@ class ArrayDecl(Node):
 
 
 class ArrayElem(Node):
+    # Класс для узла доступа к элементу массива (ArrayElem).
+    # Содержит идентификатор массива и выражение-индекс.
     def __init__(self, id_, index):
         self.id_ = id_
         self.index = index
 
 
 class Assign(Node):
+    # Класс для узла присваивания (Assign). 
+    # Содержит идентификатор (id_) и выражение (expr).
     def __init__(self, id_, expr):
         self.id_ = id_
         self.expr = expr
 
 
 class If(Node):
+    # Класс для узла условного оператора (If). 
+    # Содержит условие (cond) и блоки для ветвей истинного и ложного условий.
     def __init__(self, cond, true, false):
         self.cond = cond
         self.true = true
@@ -44,12 +56,16 @@ class If(Node):
 
 
 class While(Node):
+    # Класс для узла цикла while (While). 
+    # Содержит условие (cond) и блок, который выполняется, пока условие истинно.
     def __init__(self, cond, block):
         self.cond = cond
         self.block = block
 
 
 class For(Node):
+    # Класс для узла цикла for (For).
+    # Содержит инициализацию (init), условие (cond), блок и дополнительное условие where.
     def __init__(self, init, cond, block, where):
         self.init = init
         self.cond = cond
@@ -58,12 +74,16 @@ class For(Node):
 
 
 class RepeatUntil(Node):
+    # Класс для узла цикла repeat-until (RepeatUntil).
+    # Содержит условие (cond) и блок, который выполняется до тех пор, пока условие ложно.
     def __init__(self, cond, block):
         self.cond = cond
         self.block = block
 
 
 class FuncImpl(Node):
+    # Класс для узла определения функции (FuncImpl).
+    # Содержит информацию о типе возвращаемого значения, идентификаторе, параметрах, блоке и переменных.
     def __init__(self, type_, id_, params, block, var):
         self.type_ = type_
         self.id_ = id_
@@ -73,12 +93,17 @@ class FuncImpl(Node):
 
 
 class FuncProcCall(Node):
+    # Класс для узла вызова функции или процедуры (FuncProcCall).
+    # Содержит идентификатор и аргументы.
+
     def __init__(self, id_, args):
         self.id_ = id_
         self.args = args
 
 
 class ProcImpl(Node):
+    # Класс для узла определения процедуры (ProcImpl).
+    # Содержит информацию об идентификаторе, параметрах, блоке и переменных.
     def __init__(self, id_, params, block, var):
         self.id_ = id_
         self.params = params
@@ -87,26 +112,36 @@ class ProcImpl(Node):
 
 
 class Block(Node):
+    # Класс для узла блока кода (Block).
+    # Содержит список дочерних узлов (nodes).
     def __init__(self, nodes):
         self.nodes = nodes
 
 
 class Params(Node):
+    # Класс для узла параметров функции или процедуры (Params).
+    # Содержит список параметров.
     def __init__(self, params):
         self.params = params
 
 
 class Variables(Node):
+    # Класс для узла переменных (Variables).
+    # Содержит список переменных.
     def __init__(self, vars):
         self.vars = vars
 
 
 class Args(Node):
+    # Класс для узла аргументов при вызове функции или процедуры (Args).
+    # Содержит список аргументов.
     def __init__(self, args):
         self.args = args
 
 
 class Elems(Node):
+    # Класс для узла элементов массива (Elems).
+    # Содержит список элементов.
     def __init__(self, elems):
         self.elems = elems
 
@@ -125,11 +160,15 @@ class Exit(Node):
 
 
 class Type(Node):
+    # Класс для узла типа данных (Type).
+    # Содержит значение типа данных.
     def __init__(self, value):
         self.value = value
 
 
 class TypeString(Node):
+    # Класс для узла строки (TypeString).
+    # Содержит значение и размер строки.
     def __init__(self, value, size):
         self.value = value
         self.size = size
@@ -195,12 +234,15 @@ class FormattedArg(Node):
         self.right = right
 
 
-class Visitor():
-    def visit(self, parent, node):
+class Processor():
+    # Класс-посетитель для обхода AST. 
+    # Предоставляет метод visit для каждого типа узла.
+    def process(self, parent, node):
         method = 'visit_' + type(node).__name__
         visitor = getattr(self, method, self.die)
         return visitor(parent, node)
 
     def die(self, parent, node):
+    # Обработчик ошибки для случая отсутствия метода visit для конкретного типа узла.
         method = 'visit_' + type(node).__name__
         raise ValueError("Missing method: {}".format(method))

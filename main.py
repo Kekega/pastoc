@@ -7,14 +7,11 @@ from symbols import *
 DEBUG = True  
 
 if DEBUG:
-    #10 - 13, 17
-
-    test_id = '17' 
+    test_id = '09' 
     path_root = 'tests/'
     args = {}
     args['src'] = f'{path_root}{test_id}/src.pas'
     args['gen'] = f'{path_root}{test_id}/gen.c'
-    # args['gen'] = 'gen.c'
 else:
     import argparse
 

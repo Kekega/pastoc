@@ -6,6 +6,7 @@ from token_class import Class
 
 
 class ParsingError(Exception):
+    # Класс исключения для ошибок при парсинге
     def __init__(self, element="", comm=""):
         self.message = f"Parsing error while parsing element {element}."
         if comm:
@@ -14,11 +15,11 @@ class ParsingError(Exception):
 
 
 class Parser:
+    # Класс парсера
     def __init__(self, tokens):
         self.tokens = tokens
         self.curr = tokens.pop(0)
         self.prev = None
-        # self.nodes = []
     
     var_table = {}
     error_message = ""
@@ -33,15 +34,8 @@ class Parser:
 
         return wrapper
     
-    def check_token_is_known(self, class_):
-        # if class_ == 
-        pass
-
     def eat(self, class_):
         if self.curr.class_ == class_:
-            # print(self.curr.lexeme, class_)
-            if self.curr.lexeme == 'intger':
-                raise ValueError
             self.prev = self.curr
             self.curr = self.tokens.pop(0)
         else:
@@ -611,7 +605,6 @@ class Parser:
 
     def die(self, text):
         self.error_message = text
-        # raise SystemExit(text)
 
     def die_deriv(self, fun):
         self.die(f"Derivation error: {fun} {self.curr} (row:{self.curr.row}, col:{self.curr.col})")

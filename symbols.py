@@ -1,4 +1,4 @@
-from nodes import *
+from nodes import Processor
 
 
 class Symbol:
@@ -53,14 +53,14 @@ class Symbols:
         return next(self.symbols.values())
 
 
-class Symbolizer(Visitor):
+class Symbolizer(Processor):
     def __init__(self, ast):
         self.ast = ast
 
     def visit_Program(self, parent, node):
         node.symbols = Symbols()
         for n in node.nodes:
-            self.visit(node, n)
+            self.process(node, n)
 
     def visit_Decl(self, parent, node):
         parent.symbols.put(node.id_.value, node.type_.value, id(parent))
@@ -77,37 +77,37 @@ class Symbolizer(Visitor):
 
     def visit_If(self, parent, node):
         node.symbols = Symbols()
-        self.visit(node, node.true)
+        self.process(node, node.true)
         if node.false is not None:
-            self.visit(node, node.false)
+            self.process(node, node.false)
 
     def visit_While(self, parent, node):
         node.symbols = Symbols()
-        self.visit(node, node.block)
+        self.process(node, node.block)
 
     def visit_For(self, parent, node):
         node.symbols = Symbols()
-        self.visit(node, node.block)
+        self.process(node, node.block)
 
     def visit_RepeatUntil(self, parent, node):
         node.symbols = Symbols()
-        self.visit(node, node.block)
+        self.process(node, node.block)
 
     def visit_FuncImpl(self, parent, node):
         node.symbols = Symbols()
         parent.symbols.put(node.id_.value, node.type_.value, id(parent))
         node.symbols.put(node.id_.value, node.type_.value, id(parent))
-        self.visit(node, node.var)
-        self.visit(node, node.block)
-        self.visit(node, node.params)
+        self.process(node, node.var)
+        self.process(node, node.block)
+        self.process(node, node.params)
 
     def visit_ProcImpl(self, parent, node):
         node.symbols = Symbols()
         parent.symbols.put(node.id_.value, 'void', id(parent))
         node.symbols.put(node.id_.value, 'void', id(parent))
-        self.visit(node, node.var)
-        self.visit(node, node.block)
-        self.visit(node, node.params)
+        self.process(node, node.var)
+        self.process(node, node.block)
+        self.process(node, node.params)
 
     def visit_FuncProcCall(self, parent, node):
         pass
@@ -115,17 +115,17 @@ class Symbolizer(Visitor):
     def visit_Block(self, parent, node):
         node.symbols = parent.symbols
         for n in node.nodes:
-            self.visit(parent, n)
+            self.process(parent, n)
 
     def visit_Params(self, parent, node):
 
         for p in node.params:
-            self.visit(parent, p)
+            self.process(parent, p)
 
     def visit_Variables(self, parent, node):
 
         for p in node.vars:
-            self.visit(parent, p)
+            self.process(parent, p)
 
     def visit_Args(self, parent, node):
         pass
@@ -182,4 +182,4 @@ class Symbolizer(Visitor):
         pass
 
     def symbolize(self):
-        self.visit(None, self.ast)
+        self.process(None, self.ast)

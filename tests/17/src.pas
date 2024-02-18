@@ -3,8 +3,12 @@ function f1(a: integer) : integer;
     begin
         f2 := b + 1;
     end;
-    begin
-        f1 := f2(a);
+    begin        
+        for i := 1 to 5 do
+        begin
+            f1 := a + 1;
+        end;
+
     end;
 
 var

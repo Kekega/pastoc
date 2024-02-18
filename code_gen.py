@@ -4,7 +4,7 @@ import uuid
 from nodes import *
 
 
-class Generator(Visitor):
+class Generator(Processor):
     def __init__(self, ast):
         self.ast = ast
         self.py = ""
@@ -27,9 +27,9 @@ class Generator(Visitor):
         self.newline()
         for n in node.nodes:
             if isinstance(n, Variables):
-                self.visit(node, n)
+                self.process(node, n)
             if isinstance(n, Block):
-                self.visit(node, n)
+                self.process(node, n)
 
         self.newline()
         self.append('}')
@@ -37,99 +37,99 @@ class Generator(Visitor):
 
         for n in node.nodes:
             if isinstance(n, ProcImpl):
-                self.visit(node, n)
+                self.process(node, n)
             if isinstance(n, FuncImpl):
-                self.visit(node, n)
+                self.process(node, n)
 
         pass
 
     def visit_Decl(self, parent, node):
-        self.visit(node, node.type_)
-        self.visit(node, node.id_)
+        self.process(node, node.type_)
+        self.process(node, node.id_)
         if (isinstance(node.type_, TypeString)):
             self.append('[100] = {0}')
 
     def visit_ArrayDecl(self, parent, node):
-        self.visit(node, node.type_)
+        self.process(node, node.type_)
 
-        self.visit(node, node.id_)
+        self.process(node, node.id_)
         self.append('[')
-        self.visit(node, node.high)
+        self.process(node, node.high)
         self.append('-')
-        self.visit(node, node.low)
+        self.process(node, node.low)
         self.append('+1] ')
         if node.elems is not None:
             self.append(' = {')
-            self.visit(node, node.elems)
+            self.process(node, node.elems)
             self.append('}')
 
     def visit_ArrayElem(self, parent, node):
-        self.visit(node, node.id_)
+        self.process(node, node.id_)
         self.append('[')
-        self.visit(node, node.index)
+        self.process(node, node.index)
         self.append('-1]')
 
     def visit_Assign(self, parent, node):
         # добавить обаботку в любом месте (мб не сюда встатвить?)
         if isinstance(node.id_, ArrayElem) or not node.id_.value in self.lookup_table:
-            self.visit(node, node.id_)
+            self.process(node, node.id_)
             self.append(' = ')
-            self.visit(node, node.expr)
+            self.process(node, node.expr)
         else:
             self.append(self.lookup_table[node.id_.value])
             self.append(' = ')
-            self.visit(node, node.expr)
+            self.process(node, node.expr)
 
     def visit_If(self, parent, node):
         self.append('if ')
         self.append('(')
-        self.visit(node, node.cond)
+        self.process(node, node.cond)
         self.append(')')
         self.append('{')
         self.newline()
-        self.visit(node, node.true)
+        self.process(node, node.true)
         self.append('}')
         if node.false is not None:
             self.append('else{')
             self.newline()
-            self.visit(node, node.false)
+            self.process(node, node.false)
             self.append('}')
 
     def visit_While(self, parent, node):
         self.append('while ')
         self.append('(')
-        self.visit(node, node.cond)
+        self.process(node, node.cond)
         self.append(')')
         self.append('{')
         self.newline()
-        self.visit(node, node.block)
+        self.process(node, node.block)
         self.append('}')
         self.newline()
 
     def visit_For(self, parent, node):
         self.append('for (')
-        self.visit(node, node.init)
+        self.process(node, node.init)
         self.append(';')
         if (node.where.value == 'to'):
             value = node.init.id_.value
             self.append(value)
             self.append('<=')
-            self.visit(node, node.cond)
+            self.process(node, node.cond)
             self.append(';')
             self.append(value)
             self.append('++){')
             self.newline()
-            self.visit(node, node.block)
+            self.process(node, node.block)
         else:
             value = node.init.id_.value
             self.append(value)
             self.append('>=')
-            self.visit(node, node.cond)
+            self.process(node, node.cond)
             self.append(';')
             self.append(value)
             self.append('--){')
             self.newline()
-            self.visit(node, node.block)
+            self.process(node, node.block)
 
         self.append('}')
 
@@ -137,24 +137,24 @@ class Generator(Visitor):
         self.append('do')
         self.append('{')
         self.newline()
-        self.visit(node, node.block)
+        self.process(node, node.block)
         self.append('}')
         self.newline()
         self.append('while (')
         if (isinstance(node.cond, BoolValue)):
             self.append(1)
         else:
-            self.visit(node, node.cond)
+            self.process(node, node.cond)
         self.append(')')
         self.newline()
 
     def visit_FuncImpl(self, parent, node):
         self.newline()
-        self.visit(node, node.type_)
+        self.process(node, node.type_)
         # self.append(' ')
-        self.visit(node, node.id_)
+        self.process(node, node.id_)
         self.append('(')
-        self.visit(node, node.params)
+        self.process(node, node.params)
         self.append(')')
         x = self.py.split('\n')
 
@@ -184,8 +184,8 @@ class Generator(Visitor):
         self.append(var_name + ';')
         self.newline()
 
-        self.visit(node, node.var)
-        self.visit(node, node.block)
+        self.process(node, node.var)
+        self.process(node, node.block)
         # self.vis_block(node, node.block, node.id_)
         self.newline()
 
@@ -201,7 +201,7 @@ class Generator(Visitor):
             
     def vis_block(self, parent, node, id_):
         for n in node.nodes:
-            self.visit(node, n)
+            self.process(node, n)
             if isinstance(n, If):
                 pass
             elif isinstance(n, For):
@@ -219,9 +219,9 @@ class Generator(Visitor):
     def visit_ProcImpl(self, parent, node):
         self.newline()
         self.append('void ')
-        self.visit(node, node.id_)
+        self.process(node, node.id_)
         self.append('(')
-        self.visit(node, node.params)
+        self.process(node, node.params)
         self.append(')')
         x = self.py.split('\n')
 
@@ -229,35 +229,35 @@ class Generator(Visitor):
         self.append('{')
 
         self.newline()
-        self.visit(node, node.var)
-        self.visit(node, node.block)
+        self.process(node, node.var)
+        self.process(node, node.block)
         self.newline()
         self.append('}')
 
     def visit_FuncProcCall(self, parent, node):
         if node.id_.value == ('inc'):
-            self.visit(node, node.args)
+            self.process(node, node.args)
             self.append('++')
         elif node.id_.value == ('length'):
             self.append('strlen(')
-            self.visit(node, node.args)
+            self.process(node, node.args)
             self.append(')')
         elif node.id_.value == ('ord'):
-            self.visit(node, node.args)
+            self.process(node, node.args)
         elif node.id_.value == ('insert'):
             for i, n in enumerate(node.args.args):
                 if i == 1:
-                    self.visit(node, n)
+                    self.process(node, n)
             self.append('[')
             for i, n in enumerate(node.args.args):
                 if i == 2:
-                    self.visit(node, n)
+                    self.process(node, n)
             self.append('-1] = ')
             for i, n in enumerate(node.args.args):
                 if i == 0:
-                    self.visit(node, n)
+                    self.process(node, n)
         elif node.id_.value == ('chr'):
-            self.visit(node, node.args)
+            self.process(node, node.args)
         elif node.id_.value == ('readln') or node.id_.value == ('read'):
             for i, n in enumerate(node.args.args):
                 self.append('scanf(')
@@ -266,13 +266,13 @@ class Generator(Visitor):
 
                     if (type == 'integer array'):
                         self.append('"%d",&')
-                        self.visit(node, n)
+                        self.process(node, n)
                     if (type == 'char array'):
                         self.append('"%c",&')
-                        self.visit(node, n)
+                        self.process(node, n)
                     if (type == 'real array'):
                         self.append('"%f",&')
-                        self.visit(node, n)
+                        self.process(node, n)
                     self.append(')')
                     if (i < len(node.args.args) - 1):
                         self.append(';')
@@ -302,7 +302,7 @@ class Generator(Visitor):
                 self.append('printf(')
                 if (isinstance(n, BinOp)):
                     self.append('"%d",')
-                    self.visit(node, n)
+                    self.process(node, n)
                 elif (isinstance(n, Char)):
                     self.append('"')
                     self.append(n.value)
@@ -327,7 +327,7 @@ class Generator(Visitor):
                     self.append(n.value)
                 elif (isinstance(n, ArrayElem)):
                     self.append('"%d",')
-                    self.visit(node, n)
+                    self.process(node, n)
                 elif (isinstance(n, Real)):
                     self.append('"%f",')
                     self.append(n.value)
@@ -336,7 +336,7 @@ class Generator(Visitor):
                     self.append(n.value)
                     self.append('"')
                 elif (isinstance(n, FormattedArg)):
-                    self.visit(node, n)
+                    self.process(node, n)
                 elif (isinstance(n, FuncProcCall)):
                     if (n.id_.value == 'chr' or n.id_.value == 'ord'):
                         self.append('"%c",')
@@ -348,7 +348,7 @@ class Generator(Visitor):
                             self.append('"%f",')
                         else:
                             self.append('"%c",')
-                    self.visit(node, n)
+                    self.process(node, n)
 
                 self.append(')')
                 if (i < len(node.args.args) - 1) or (len(node.args.args) == 1 and node.id_.value == ('writeln')):
@@ -358,14 +358,14 @@ class Generator(Visitor):
             if node.id_.value == ('writeln'):
                 self.append('printf("\\n")')
         else:
-            self.visit(node, node.id_)
+            self.process(node, node.id_)
             self.append('(')
-            self.visit(node, node.args)
+            self.process(node, node.args)
             self.append(')')
 
     def visit_Block(self, parent, node):
         for n in node.nodes:
-            self.visit(node, n)
+            self.process(node, n)
             if isinstance(n, If):
                 pass
             elif isinstance(n, For):
@@ -380,11 +380,11 @@ class Generator(Visitor):
         for i, p in enumerate(node.params):
             if i > 0:
                 self.append(', ')
-            self.visit(node, p)
+            self.process(node, p)
 
     def visit_Variables(self, parent, node):
         for n in node.vars:
-            self.visit(node, n)
+            self.process(node, n)
             self.append(';')
             self.newline()
 
@@ -392,13 +392,13 @@ class Generator(Visitor):
         for i, a in enumerate(node.args):
             if i > 0:
                 self.append(', ')
-            self.visit(node, a)
+            self.process(node, a)
 
     def visit_Elems(self, parent, node):
         for i, e in enumerate(node.elems):
             if i > 0:
                 self.append(', ')
-            self.visit(node, e)
+            self.process(node, e)
 
     def visit_Break(self, parent, node):
         self.append('break')
@@ -410,7 +410,7 @@ class Generator(Visitor):
         self.append('return')
         if node.value is not None:
             self.append('(')
-            self.visit(node, node.value)
+            self.process(node, node.value)
             self.append(')')
 
     def visit_TypeString(self, parent, node):
@@ -451,7 +451,7 @@ class Generator(Visitor):
 
     def visit_BinOp(self, parent, node):
 
-        self.visit(node, node.first)
+        self.process(node, node.first)
         if node.symbol == 'mod':
             self.append(' % ')
         elif node.symbol == 'div':
@@ -468,14 +468,14 @@ class Generator(Visitor):
             self.append(' != ')
         else:
             self.append(node.symbol)
-        self.visit(node, node.second)
+        self.process(node, node.second)
 
     def visit_UnOp(self, parent, node):
         if node.symbol == '-':
             self.append('-')
         elif node.symbol != '&':
             self.append(node.symbol)
-        self.visit(node, node.first)
+        self.process(node, node.first)
 
     def visit_Where(self, parent, node):
         pass
@@ -488,9 +488,9 @@ class Generator(Visitor):
 
     def visit_FormattedArg(self, parent, node):
         self.append('"%.')
-        self.visit(node, node.right)
+        self.process(node, node.right)
         self.append('f",')
-        self.visit(node, node.args)
+        self.process(node, node.args)
 
     def format_c_code(self, input_code):
         formatted_code = ""
@@ -511,8 +511,8 @@ class Generator(Visitor):
         return formatted_code
 
     def generate(self, path):
-        self.visit(None, self.ast)
-        self.py = "#include<stdio.h>\n\n" + self.py
+        self.process(None, self.ast)
+        self.py = "#include<stdio.h>\n\n\n" + self.py
         self.py = re.sub('\n\s*\n', '\n', self.py)
         self.py = self.format_c_code(self.py)
         with open(path, 'w') as source:

@@ -1,31 +1,31 @@
 var
-	a : array[1..1005] of integer;
-	n, i, max, x, br : integer;
+  occurrences: array[1..1005] of integer;
+  size, index, maxOccurrence, element, resultElement : integer;
 
 begin
-	for i := 1 to 1005 do
-	begin
-		a[i] := 0;
-	end;
+  for index := 1 to 1005 do
+  begin
+    occurrences[index] := 0;
+  end;
 
-	readln(n);
+  readln(size);
 
-	for i := 1 to n do
-	begin
-		read(x);
-		a[x] := a[x] + 1;
-	end;
+  for index := 1 to size do
+  begin
+    read(element);
+    occurrences[element] := occurrences[element] + 1;
+  end;
 
-	max := -1;
+  maxOccurrence := -1;
 
-	for i := 1 to 1005 do
-	begin
-		if max < a[i] then
-		begin
-			max := a[i];
-			br := i;
-		end;
-	end;
+  for index := 1 to 1005 do
+  begin
+    if maxOccurrence < occurrences[index] then
+    begin
+      maxOccurrence := occurrences[index];
+      resultElement := index;
+    end;
+  end;
 
-	write(br, ' ', max);
+  write(resultElement, ' ', maxOccurrence);
 end.

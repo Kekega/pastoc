@@ -1,18 +1,20 @@
-function pow_rek(a, b: integer): integer;
-	begin
-		if b = 0 then
-		begin
-			exit(1);
-		end;
-
-		exit(a * pow_rek(a, b - 1));
-	end;
+function recursivePower(base, exponent: integer): integer;
+begin
+  if exponent = 0 then
+  begin
+    recursivePower := 1;
+  end
+  else 
+  begin
+	recursivePower := base * recursivePower(base, exponent - 1);
+  end;
+end;
 
 var
-	a, b: integer;
+  baseValue, exponentValue: integer;
 
 begin
-	readln(a, b);
-	
-    writeln(pow_rek(a, b));
+  readln(baseValue, exponentValue);
+
+  writeln(recursivePower(baseValue, exponentValue));
 end.

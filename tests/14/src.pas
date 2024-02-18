@@ -1,16 +1,16 @@
 var
-	a : array[1..100] of integer;
-	n, i, k : integer;
+  arr: array[1..100] of integer;
+  size, index, offset: integer;
 begin
-	readln(n, k);
+  readln(size, offset);
 
-	for i := 1 to n do
-	begin
-		read(a[i]);
-	end;
+  for index := 1 to size do
+  begin
+    read(arr[index]);
+  end;
 
-	for i := k to n + k - 1 do
-	begin
-		write(a[i mod n + 1], ' ');
-	end;
+  for index := offset to size + offset - 1 do
+  begin
+    write(arr[index mod size + 1], ' ');
+  end;
 end.
