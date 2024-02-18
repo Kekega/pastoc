@@ -203,4 +203,4 @@ class Visitor():
 
     def die(self, parent, node):
         method = 'visit_' + type(node).__name__
-        raise SystemExit("Missing method: {}".format(method))
+        raise ValueError("Missing method: {}".format(method))

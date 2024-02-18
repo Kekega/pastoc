@@ -5,11 +5,23 @@ from nodes import *
 from token_class import Class
 
 
+class ParsingError(Exception):
+    def __init__(self, element="", comm=""):
+        self.message = f"Parsing error while parsing element {element}."
+        if comm:
+            self.message += " " + comm
+        super().__init__(self.message)
+
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.curr = tokens.pop(0)
         self.prev = None
+        # self.nodes = []
+    
+    var_table = {}
+    error_message = ""
 
     def restorable(call):
         @wraps(call)
@@ -20,9 +32,16 @@ class Parser:
             return result
 
         return wrapper
+    
+    def check_token_is_known(self, class_):
+        # if class_ == 
+        pass
 
     def eat(self, class_):
         if self.curr.class_ == class_:
+            # print(self.curr.lexeme, class_)
+            if self.curr.lexeme == 'intger':
+                raise ValueError
             self.prev = self.curr
             self.curr = self.tokens.pop(0)
         else:
@@ -37,8 +56,10 @@ class Parser:
                 nodes.append(self.func())
             elif self.curr.class_ == Class.VAR:
                 self.eat(Class.VAR)
-                nodes.append(self.variables())
+                vars, _, _ = self.variables()
+                nodes.append(vars)
             elif self.curr.class_ == Class.BEGIN:
+                print('3121')
                 self.eat(Class.BEGIN)
                 nodes.append(self.block())
                 self.eat(Class.END)
@@ -75,16 +96,36 @@ class Parser:
     def variables(self):
         vars = []
         lista = []
+
+        funcs = []
+        procs = []
+        was_colon = False
         # prev = None
         while self.curr.class_ != Class.BEGIN:
+            if (self.curr.class_ == Class.FUNCTION):
+                # self.nodes.append(self.func())
+
+                funcs.append(self.func())
+
+                # print(self.nodes, "<<<<<")
+            
+            if (self.curr.class_ == Class.PROCEDURE):
+                self.nodes.append(self.proc())
+                procs.append(self.proc())
+
+            # print(self.curr.class_)
             if (self.curr.class_ == Class.ID):
+                # if was_colon:
+                    # raise ParsingError(str(self.curr), "Expected Type")
                 lista.append(self.curr.lexeme)
+                # print(was_colon)
                 self.eat(Class.ID)
 
             elif (self.curr.class_ == Class.COMMA):
                 self.eat(Class.COMMA)
 
             elif (self.curr.class_ == Class.COLON):
+                was_colon = True
                 self.eat(Class.COLON)
 
                 if self.curr.class_ == Class.TYPE:
@@ -122,49 +163,58 @@ class Parser:
 
                 lista.clear()
 
-        return Variables(vars)
+        return Variables(vars), funcs, procs
 
     def proc(self):
-        self.eat(Class.PROCEDURE)
-        id_ = self.idDefines()
-        self.eat(Class.LPAREN)
-        params = self.paramsVar()
-        self.eat(Class.RPAREN)
-        self.eat(Class.SEMICOLON)
-        vars = []
-        if (self.curr.class_ == Class.VAR):
-            self.eat(Class.VAR)
-            vars = self.variables()
-        if not vars:
-            vars = Variables(vars)
-        self.eat(Class.BEGIN)
-        block = self.block()
-        self.eat(Class.END)
-        self.eat(Class.SEMICOLON)
+        try:
+            self.eat(Class.PROCEDURE)
+            id_ = self.idDefines()
+            self.eat(Class.LPAREN)
+            params = self.paramsVar()
+            self.eat(Class.RPAREN)
+            self.eat(Class.SEMICOLON)
+            vars = []
+            fs, prs = [], []
+            if (self.curr.class_ == Class.VAR):
+                self.eat(Class.VAR)
+                vars, fs, prs = self.variables()
+            if not vars:
+                vars = Variables(vars)
+            self.eat(Class.BEGIN)
+            block = self.block(fs, prs)
+            self.eat(Class.END)
+            self.eat(Class.SEMICOLON)
 
-        return ProcImpl(id_, params, block, vars)
+            return ProcImpl(id_, params, block, vars)
+        except Exception:
+            raise ParsingError(f"procedure. {self.error_message}")
 
     def func(self):
-        self.eat(Class.FUNCTION)
-        id_ = self.idDefines()
-        self.eat(Class.LPAREN)
-        params = self.paramsVar()
-        self.eat(Class.RPAREN)
-        self.eat(Class.COLON)
-        type_ = Type(self.curr.lexeme)
-        self.eat(Class.TYPE)
-        self.eat(Class.SEMICOLON)
-        vars = []
-        if (self.curr.class_ == Class.VAR):
-            self.eat(Class.VAR)
-            vars = self.variables()
-        if not vars:
-            vars = Variables(vars)
-        self.eat(Class.BEGIN)
-        block = self.block()
-        self.eat(Class.END)
-        self.eat(Class.SEMICOLON)
-        return FuncImpl(type_, id_, params, block, vars)
+        try:
+            self.eat(Class.FUNCTION)
+            id_ = self.idDefines()
+            self.eat(Class.LPAREN)
+            params = self.paramsVar()
+            self.eat(Class.RPAREN)
+            self.eat(Class.COLON)
+            type_ = Type(self.curr.lexeme)
+            self.eat(Class.TYPE)
+            self.eat(Class.SEMICOLON)
+            vars = []
+            fs, prs = [], []
+            if (self.curr.class_ == Class.VAR):
+                self.eat(Class.VAR)
+                vars, fs, prs = self.variables()
+            if not vars:
+                vars = Variables(vars)
+            self.eat(Class.BEGIN)
+            block = self.block(fs, prs)
+            self.eat(Class.END)
+            self.eat(Class.SEMICOLON)
+            return FuncImpl(type_, id_, params, block, vars)
+        except Exception:
+            raise ParsingError(f"function. {self.error_message}")
+        
 
     def id_(self):
         is_array_elem = self.prev.class_ != Class.TYPE
@@ -262,15 +312,26 @@ class Parser:
         self.eat(Class.SEMICOLON)
         return RepeatUntil(cond, block)
 
-    def block(self):
+    def block(self, fs = None, prs = None):
         nodes = []
+        if fs:
+            for new_func in fs:
+                nodes.append(new_func)
+        if prs:
+            for new_proc in prs:
+                nodes.append(new_proc)
         while self.curr.class_ != Class.END:
+            print(32443243)
             if self.curr.class_ == Class.VAR:
                 self.eat(Class.VAR)
-                nodes.append(self.variables())
+                vars, _, _ = self.variables()
+                print(vars, 'fvdvfv')
+                nodes.append(vars)
                 ###
-            elif self.curr.class_ == Class.FUNCTION:
-                nodes.append(self.func())
+            # elif self.curr.class_ == Class.FUNCTION:
+            #     nodes.append(self.func())
+            # elif self.curr.class_ == Class.PROCEDURE:
+            #     nodes.append(self.proc())
             ###
             elif self.curr.class_ == Class.IF:
                 nodes.append(self.if_())
@@ -293,12 +354,16 @@ class Parser:
                 break
             else:
                 self.die_deriv(self.block.__name__)
+
+        print(nodes, 'nodes')
+        # raise ValueError
         return Block(nodes)
 
     def params(self):
         params = []
         while self.curr.class_ != Class.RPAREN:
-            params.append(self.variables)
+            vars, _, _ = self.variables()
+            params.append(vars)
 
         return Params(params)
 
@@ -318,7 +383,7 @@ class Parser:
             else:
                 args.append(logic)
 
-        return Args(args);
+        return Args(args)
 
     def elems(self):
         elems = []
@@ -551,7 +616,8 @@ class Parser:
         return self.program()
 
     def die(self, text):
-        raise SystemExit(text)
+        self.error_message = text
+        # raise SystemExit(text)
 
     def die_deriv(self, fun):
         self.die(f"Derivation error: {fun} {self.curr} (row:{self.curr.row}, col:{self.curr.col})")

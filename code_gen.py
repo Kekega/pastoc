@@ -9,6 +9,8 @@ class Generator(Visitor):
         self.ast = ast
         self.py = ""
         self.level = 0
+        self.lookup_table = {}
+    
 
     def append(self, text):
         self.py += str(text)
@@ -21,7 +23,7 @@ class Generator(Visitor):
         self.append('\n')
 
     def visit_Program(self, parent, node):
-        self.append('int main(){')
+        self.append('int main() {')
         self.newline()
         for n in node.nodes:
             if isinstance(n, Variables):
@@ -68,14 +70,13 @@ class Generator(Visitor):
         self.append('-1]')
 
     def visit_Assign(self, parent, node):
-        ### добавить обаботку в любом месте (мб не сюда встатвить?)
-        if not node.id_.value in self.assosiate_table:
-            print(node.id_.value, self.assosiate_table)
+        # добавить обаботку в любом месте (мб не сюда встатвить?)
+        if isinstance(node.id_, ArrayElem) or not node.id_.value in self.lookup_table:
             self.visit(node, node.id_)
             self.append(' = ')
             self.visit(node, node.expr)
         else:
-            self.append(self.assosiate_table[node.id_.value])
+            self.append(self.lookup_table[node.id_.value])
             self.append(' = ')
             self.visit(node, node.expr)
 
@@ -150,7 +151,7 @@ class Generator(Visitor):
     def visit_FuncImpl(self, parent, node):
         self.newline()
         self.visit(node, node.type_)
-        self.append(' ')
+        # self.append(' ')
         self.visit(node, node.id_)
         self.append('(')
         self.visit(node, node.params)
@@ -161,7 +162,6 @@ class Generator(Visitor):
         self.append('{')
         self.newline()
 
-        # print(type(node))
 
         # self.append(node.type_.value + ' ')
 
@@ -179,7 +179,7 @@ class Generator(Visitor):
         random_uuid = str(uuid.uuid4())[:8]
         var_name = f"_res{random_uuid}"
 
-        self.assosiate_table[node.id_.value] = var_name
+        self.lookup_table[node.id_.value] = var_name
 
         self.append(var_name + ';')
         self.newline()
@@ -192,14 +192,13 @@ class Generator(Visitor):
         ###
 
         self.append('return ')
-        self.append(self.assosiate_table[node.id_.value] + ';')
+        self.append(self.lookup_table[node.id_.value] + ';')
+        self.newline()
         
-        del self.assosiate_table[node.id_.value]
+        del self.lookup_table[node.id_.value]
 
         self.append('}')
-    
-    assosiate_table = {}
-        
+            
     def vis_block(self, parent, node, id_):
         for n in node.nodes:
             self.visit(node, n)
@@ -365,8 +364,11 @@ class Generator(Visitor):
             self.append(')')
 
     def visit_Block(self, parent, node):
+        print(11111111111)
+
 
         for n in node.nodes:
+            print(n)
             self.visit(node, n)
             if isinstance(n, If):
                 pass
@@ -514,6 +516,7 @@ class Generator(Visitor):
 
     def generate(self, path):
         self.visit(None, self.ast)
+        self.py = "#include<stdio.h>\n\n" + self.py
         self.py = re.sub('\n\s*\n', '\n', self.py)
         self.py = self.format_c_code(self.py)
         with open(path, 'w') as source:
