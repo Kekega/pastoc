@@ -70,7 +70,6 @@ class Generator(Processor):
         self.append('-1]')
 
     def visit_Assign(self, parent, node):
-        # добавить обаботку в любом месте (мб не сюда встатвить?)
         if isinstance(node.id_, ArrayElem) or not node.id_.value in self.lookup_table:
             self.process(node, node.id_)
             self.append(' = ')
