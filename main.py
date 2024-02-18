@@ -34,5 +34,3 @@ if __name__ == "__main__":
         generator = Generator(ast)
         #code = generator.generate('main1.py')
         generator.generate(args['gen'])
-        # runner = Runner(ast)
-        # runner.run()
