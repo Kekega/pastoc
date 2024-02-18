@@ -68,9 +68,16 @@ class Generator(Visitor):
         self.append('-1]')
 
     def visit_Assign(self, parent, node):
-        self.visit(node, node.id_)
-        self.append(' = ')
-        self.visit(node, node.expr)
+        ### добавить обаботку в любом месте (мб не сюда встатвить?)
+        if not node.id_.value in self.assosiate_table:
+            print(node.id_.value, self.assosiate_table)
+            self.visit(node, node.id_)
+            self.append(' = ')
+            self.visit(node, node.expr)
+        else:
+            self.append(self.assosiate_table[node.id_.value])
+            self.append(' = ')
+            self.visit(node, node.expr)
 
     def visit_If(self, parent, node):
         self.append('if ')
@@ -142,6 +149,7 @@ class Generator(Visitor):
 
     def visit_FuncImpl(self, parent, node):
         self.newline()
+        self.visit(node, node.type_)
         self.append(' ')
         self.visit(node, node.id_)
         self.append('(')
@@ -153,30 +161,65 @@ class Generator(Visitor):
         self.append('{')
         self.newline()
 
+        # print(type(node))
+
+        # self.append(node.type_.value + ' ')
+
+
         ###
         node_type = node.type_.value
         if node_type == 'integer':
-            self.append('int')
+            self.append('int ')
         elif node_type == 'char':
-            self.append('char')
+            self.append('char ')
         elif node_type == 'real':
-            self.append('float')
+            self.append('float ')
         elif node_type == 'boolean':
-            self.append('bool')
+            self.append('bool ')
         random_uuid = str(uuid.uuid4())[:8]
         var_name = f"_res{random_uuid}"
 
+        self.assosiate_table[node.id_.value] = var_name
+
+        self.append(var_name + ';')
+        self.newline()
+
         self.visit(node, node.var)
         self.visit(node, node.block)
+        # self.vis_block(node, node.block, node.id_)
         self.newline()
 
         ###
 
+        self.append('return ')
+        self.append(self.assosiate_table[node.id_.value] + ';')
+        
+        del self.assosiate_table[node.id_.value]
+
         self.append('}')
+    
+    assosiate_table = {}
+        
+    def vis_block(self, parent, node, id_):
+        for n in node.nodes:
+            self.visit(node, n)
+            if isinstance(n, If):
+                pass
+            elif isinstance(n, For):
+                pass
+            elif isinstance(n, While):
+                pass
+            else:
+                self.append(';')
+            self.newline()
+        # self.append('return ')
+        # self.append(self.assosiate_table[id_] + ';')
+        
+        # del self.assosiate_table[id_]
 
     def visit_ProcImpl(self, parent, node):
         self.newline()
-        self.append('void' + ' ')
+        self.append('void ')
         self.visit(node, node.id_)
         self.append('(')
         self.visit(node, node.params)
