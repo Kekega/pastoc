@@ -157,7 +157,24 @@ class Lexer:
         if self.pos >= self.len:
             return None
         return self.text[self.pos]
+    
+    def skip_comment(self):
 
+        self.read_space()
+
+        ch = self.next_char()
+        if not ch:
+            raise ValueError("No EOF token")
+        eaten = ch
+        while '}' not in eaten and '*)' not in eaten:
+            self.read_space()
+            
+            ch = self.next_char()
+            if not ch:
+                raise ValueError("No EOF Token")
+            eaten += ch
+        self.read_space()
+        
     def next_token(self):
         # Получение следующего токена
         self.read_space()
@@ -221,7 +238,11 @@ class Lexer:
                 token = Token(Class.GT, '>', self.row, self.col)
                 self.pos -= 1
         elif curr == '(':
-            token = Token(Class.LPAREN, curr, self.row, self.col)
+            if self.text[self.pos + 1] == '*':
+                self.skip_comment()
+                token = self.next_token()
+            else:
+                token = Token(Class.LPAREN, curr, self.row, self.col)
         elif curr == ')':
             token = Token(Class.RPAREN, curr, self.row, self.col)
         elif curr == '[':
@@ -229,7 +250,9 @@ class Lexer:
         elif curr == ']':
             token = Token(Class.RBRACKET, curr, self.row, self.col)
         elif curr == '{':
-            token = Token(Class.LBRACE, curr, self.row, self.col)
+            self.skip_comment()
+            token = self.next_token()
+            # token = Token(Class.LBRACE, curr, self.row, self.col)
         elif curr == '}':
             token = Token(Class.RBRACE, curr, self.row, self.col)
         elif curr == ';':

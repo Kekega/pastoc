@@ -20,8 +20,16 @@ class Parser:
         self.tokens = tokens
         self.curr = tokens.pop(0)
         self.prev = None
+
+    overall_identifiers = {
+        'read',
+        'readln',
+        'write',
+        'writeln'
+    }
     
-    var_table = {}
+    # var_table = {}
+    scopes_current_vars = {'_': []}
     error_message = ""
 
     def restorable(call):
@@ -61,7 +69,7 @@ class Parser:
                 self.die_deriv(self.program.__name__)
         return Program(nodes)
 
-    def paramsVar(self):
+    def parVars(self, parent = '_'): ##########
         vars = []
         lista = []
         while self.curr.class_ != Class.RPAREN:
@@ -79,6 +87,9 @@ class Parser:
                     id = Id(x)
                     vars.append(Decl(tip, id))
 
+
+                    # self.var_table[id] = self.var_table.get(id, []) + [parent]
+
                 lista.clear()
 
             if self.curr.class_ == Class.SEMICOLON:
@@ -86,7 +97,8 @@ class Parser:
 
         return Params(vars)
 
-    def variables(self):
+    def variables(self, parent='_'):
+        # parent == '_' => parent - program
         vars = []
         ids_list = []
 
@@ -103,7 +115,7 @@ class Parser:
                 # print(self.nodes, "<<<<<")
             
             if (self.curr.class_ == Class.PROCEDURE):
-                self.nodes.append(self.proc())
+                # self.nodes.append(self.proc())
                 procs.append(self.proc())
 
             # print(self.curr.class_)
@@ -115,7 +127,7 @@ class Parser:
                 self.eat(Class.COMMA)
 
             elif (self.curr.class_ == Class.COLON):
-                was_colon = True
+                # was_colon = True
                 self.eat(Class.COLON)
 
                 if self.curr.class_ == Class.TYPE:
@@ -123,6 +135,12 @@ class Parser:
                     for x in ids_list:
                         id = Id(x)
                         vars.append(Decl(tip, id))
+                        
+                        # definitions = self.var_table.get(x, [])
+                        # if parent in definitions:
+                        #     raise ValueError(f"Redifinition of variable in same scope is not allowed {self.curr}")
+                        # self.var_table[x] = definitions.append(parent)
+
                     self.eat(Class.SEMICOLON)
 
                 elif self.curr.class_ == Class.ARRAY:
@@ -160,7 +178,7 @@ class Parser:
             self.eat(Class.PROCEDURE)
             id_ = self.idDefines()
             self.eat(Class.LPAREN)
-            params = self.paramsVar()
+            params = self.parVars(id_)
             self.eat(Class.RPAREN)
             self.eat(Class.SEMICOLON)
             vars = []
@@ -184,7 +202,7 @@ class Parser:
             self.eat(Class.FUNCTION)
             id_ = self.idDefines()
             self.eat(Class.LPAREN)
-            params = self.paramsVar()
+            params = self.parVars(id_)
             self.eat(Class.RPAREN)
             self.eat(Class.COLON)
             type_ = Type(self.curr.lexeme)
@@ -336,6 +354,9 @@ class Parser:
             elif self.curr.class_ == Class.REPEAT:
                 nodes.append(self.repeat())
             elif self.curr.class_ == Class.ID:
+                # if self.curr.lexeme not in self.var_table and self.curr.lexeme not in self.overall_identifiers:
+                #     raise ValueError(f"Undefined variable {self.curr}")
+            
                 nodes.append(self.id_())
                 self.eat(Class.SEMICOLON)
             elif self.curr.class_ == Class.UNTIL:
@@ -448,6 +469,8 @@ class Parser:
             self.eat(Class.REAL)
             return value
         elif self.curr.class_ == Class.ID:
+            # if self.curr.lexeme not in self.var_table:
+            #     raise ValueError(f"Undefined variable {self.curr}")
             return self.id_()
         elif self.curr.class_ == Class.TRUE:
             self.eat(Class.TRUE)
