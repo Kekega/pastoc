@@ -7,7 +7,7 @@ from symbols import *
 DEBUG = True  
 
 if DEBUG:
-    test_id = '22' 
+    test_id = '20'
     path_root = 'tests/'
     args = {}
     args['src'] = f'{path_root}{test_id}/src.pas'
