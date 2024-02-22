@@ -22,7 +22,7 @@ class Generator(Processor):
     def newline(self):
         self.append('\n')
 
-    def visit_Program(self, parent, node):
+    def process_Program(self, parent, node):
         self.append('int main() {')
         self.newline()
         for n in node.nodes:
@@ -43,13 +43,13 @@ class Generator(Processor):
 
         pass
 
-    def visit_Decl(self, parent, node):
+    def process_Decl(self, parent, node):
         self.process(node, node.type_)
         self.process(node, node.id_)
         if (isinstance(node.type_, TypeString)):
             self.append('[100] = {0}')
 
-    def visit_ArrayDecl(self, parent, node):
+    def process_ArrayDecl(self, parent, node):
         self.process(node, node.type_)
 
         self.process(node, node.id_)
@@ -63,13 +63,13 @@ class Generator(Processor):
             self.process(node, node.elems)
             self.append('}')
 
-    def visit_ArrayElem(self, parent, node):
+    def process_ArrayElem(self, parent, node):
         self.process(node, node.id_)
         self.append('[')
         self.process(node, node.index)
         self.append('-1]')
 
-    def visit_Assign(self, parent, node):
+    def process_Assign(self, parent, node):
         if isinstance(node.id_, ArrayElem) or not node.id_.value in self.lookup_table:
             self.process(node, node.id_)
             self.append(' = ')
@@ -79,7 +79,7 @@ class Generator(Processor):
             self.append(' = ')
             self.process(node, node.expr)
 
-    def visit_If(self, parent, node):
+    def process_If(self, parent, node):
         self.append('if ')
         self.append('(')
         self.process(node, node.cond)
@@ -94,7 +94,7 @@ class Generator(Processor):
             self.process(node, node.false)
             self.append('}')
 
-    def visit_While(self, parent, node):
+    def process_While(self, parent, node):
         self.append('while ')
         self.append('(')
         self.process(node, node.cond)
@@ -105,7 +105,7 @@ class Generator(Processor):
         self.append('}')
         self.newline()
 
-    def visit_For(self, parent, node):
+    def process_For(self, parent, node):
         self.append('for (')
         self.process(node, node.init)
         self.append(';')
@@ -132,7 +132,7 @@ class Generator(Processor):
 
         self.append('}')
 
-    def visit_RepeatUntil(self, parent, node):
+    def process_RepeatUntil(self, parent, node):
         self.append('do')
         self.append('{')
         self.newline()
@@ -147,7 +147,7 @@ class Generator(Processor):
         self.append(')')
         self.newline()
 
-    def visit_FuncImpl(self, parent, node):
+    def process_FuncImpl(self, parent, node):
         self.newline()
         self.process(node, node.type_)
         # self.append(' ')
@@ -215,7 +215,7 @@ class Generator(Processor):
         
         # del self.assosiate_table[id_]
 
-    def visit_ProcImpl(self, parent, node):
+    def process_ProcImpl(self, parent, node):
         self.newline()
         self.append('void ')
         self.process(node, node.id_)
@@ -233,7 +233,7 @@ class Generator(Processor):
         self.newline()
         self.append('}')
 
-    def visit_FuncProcCall(self, parent, node):
+    def process_FuncProcCall(self, parent, node):
         if node.id_.value == ('inc'):
             self.process(node, node.args)
             self.append('++')
@@ -350,8 +350,9 @@ class Generator(Processor):
                     self.process(node, n)
 
                 self.append(')')
-                self.append(';')
-                self.newline()
+                if not (i == len(node.args.args) - 1) or node.id_.value == ('writeln'):
+                    self.append(';')
+                    self.newline()
 
             if node.id_.value == ('writeln'):
                 self.append('printf("\\n")')
@@ -361,7 +362,7 @@ class Generator(Processor):
             self.process(node, node.args)
             self.append(')')
 
-    def visit_Block(self, parent, node):
+    def process_Block(self, parent, node):
         for n in node.nodes:
             self.process(node, n)
             if isinstance(n, If):
@@ -374,47 +375,47 @@ class Generator(Processor):
                 self.append(';')
             self.newline()
 
-    def visit_Params(self, parent, node):
+    def process_Params(self, parent, node):
         for i, p in enumerate(node.params):
             if i > 0:
                 self.append(', ')
             self.process(node, p)
 
-    def visit_Variables(self, parent, node):
+    def process_Variables(self, parent, node):
         for n in node.vars:
             self.process(node, n)
             self.append(';')
             self.newline()
 
-    def visit_Args(self, parent, node):
+    def process_Args(self, parent, node):
         for i, a in enumerate(node.args):
             if i > 0:
                 self.append(', ')
             self.process(node, a)
 
-    def visit_Elems(self, parent, node):
+    def process_Elems(self, parent, node):
         for i, e in enumerate(node.elems):
             if i > 0:
                 self.append(', ')
             self.process(node, e)
 
-    def visit_Break(self, parent, node):
+    def process_Break(self, parent, node):
         self.append('break')
 
-    def visit_Continue(self, parent, node):
+    def process_Continue(self, parent, node):
         self.append('continue')
 
-    def visit_Exit(self, parent, node):
+    def process_Exit(self, parent, node):
         self.append('return')
         if node.value is not None:
             self.append('(')
             self.process(node, node.value)
             self.append(')')
 
-    def visit_TypeString(self, parent, node):
+    def process_TypeString(self, parent, node):
         self.append('char ')
 
-    def visit_Type(self, parent, node):
+    def process_Type(self, parent, node):
         if node.value == 'real':
             self.append('float ')
         if node.value == 'integer':
@@ -426,28 +427,28 @@ class Generator(Processor):
         if node.value == 'char':
             self.append('char ')
 
-    def visit_Int(self, parent, node):
+    def process_Int(self, parent, node):
         self.append(node.value)
 
-    def visit_Char(self, parent, node):
+    def process_Char(self, parent, node):
         self.append("'" + node.value + "'")
 
-    def visit_String(self, parent, node):
+    def process_String(self, parent, node):
         self.append(node.value)
 
-    def visit_Real(self, parent, node):
+    def process_Real(self, parent, node):
         self.append(node.value)
 
-    def visit_Boolean(self, parent, node):
+    def process_Boolean(self, parent, node):
         if node.value == 'true':
             self.append('1')
         else:
             self.append('0')
 
-    def visit_Id(self, parent, node):
+    def process_Id(self, parent, node):
         self.append(node.value)
 
-    def visit_BinOp(self, parent, node):
+    def process_BinOp(self, parent, node):
 
         self.process(node, node.first)
         if node.symbol == 'mod':
@@ -468,23 +469,23 @@ class Generator(Processor):
             self.append(node.symbol)
         self.process(node, node.second)
 
-    def visit_UnOp(self, parent, node):
+    def process_UnOp(self, parent, node):
         if node.symbol == '-':
             self.append('-')
         elif node.symbol != '&':
             self.append(node.symbol)
         self.process(node, node.first)
 
-    def visit_Where(self, parent, node):
+    def process_Where(self, parent, node):
         pass
 
-    def visit_BoolValue(self, parent, node):
+    def process_BoolValue(self, parent, node):
         if node.value == 'true':
             self.append('1')
         else:
             self.append('0')
 
-    def visit_FormattedArg(self, parent, node):
+    def process_FormattedArg(self, parent, node):
         self.append('"%.')
         self.process(node, node.right)
         self.append('f",')

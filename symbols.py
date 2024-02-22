@@ -57,43 +57,43 @@ class Symbolizer(Processor):
     def __init__(self, ast):
         self.ast = ast
 
-    def visit_Program(self, parent, node):
+    def process_Program(self, parent, node):
         node.symbols = Symbols()
         for n in node.nodes:
             self.process(node, n)
 
-    def visit_Decl(self, parent, node):
+    def process_Decl(self, parent, node):
         parent.symbols.put(node.id_.value, node.type_.value, id(parent))
 
-    def visit_ArrayDecl(self, parent, node):
+    def process_ArrayDecl(self, parent, node):
         node.symbols = Symbols()
         parent.symbols.put(node.id_.value, node.type_.value + ' array', id(parent))
 
-    def visit_ArrayElem(self, parent, node):
+    def process_ArrayElem(self, parent, node):
         pass
 
-    def visit_Assign(self, parent, node):
+    def process_Assign(self, parent, node):
         pass
 
-    def visit_If(self, parent, node):
+    def process_If(self, parent, node):
         node.symbols = Symbols()
         self.process(node, node.true)
         if node.false is not None:
             self.process(node, node.false)
 
-    def visit_While(self, parent, node):
+    def process_While(self, parent, node):
         node.symbols = Symbols()
         self.process(node, node.block)
 
-    def visit_For(self, parent, node):
+    def process_For(self, parent, node):
         node.symbols = Symbols()
         self.process(node, node.block)
 
-    def visit_RepeatUntil(self, parent, node):
+    def process_RepeatUntil(self, parent, node):
         node.symbols = Symbols()
         self.process(node, node.block)
 
-    def visit_FuncImpl(self, parent, node):
+    def process_FuncImpl(self, parent, node):
         node.symbols = Symbols()
         parent.symbols.put(node.id_.value, node.type_.value, id(parent))
         node.symbols.put(node.id_.value, node.type_.value, id(parent))
@@ -101,7 +101,7 @@ class Symbolizer(Processor):
         self.process(node, node.block)
         self.process(node, node.params)
 
-    def visit_ProcImpl(self, parent, node):
+    def process_ProcImpl(self, parent, node):
         node.symbols = Symbols()
         parent.symbols.put(node.id_.value, 'void', id(parent))
         node.symbols.put(node.id_.value, 'void', id(parent))
@@ -109,76 +109,76 @@ class Symbolizer(Processor):
         self.process(node, node.block)
         self.process(node, node.params)
 
-    def visit_FuncProcCall(self, parent, node):
+    def process_FuncProcCall(self, parent, node):
         pass
 
-    def visit_Block(self, parent, node):
+    def process_Block(self, parent, node):
         node.symbols = parent.symbols
         for n in node.nodes:
             self.process(parent, n)
 
-    def visit_Params(self, parent, node):
+    def process_Params(self, parent, node):
 
         for p in node.params:
             self.process(parent, p)
 
-    def visit_Variables(self, parent, node):
+    def process_Variables(self, parent, node):
 
         for p in node.vars:
             self.process(parent, p)
 
-    def visit_Args(self, parent, node):
+    def process_Args(self, parent, node):
         pass
 
-    def visit_Elems(self, parent, node):
+    def process_Elems(self, parent, node):
         pass
 
-    def visit_Break(self, parent, node):
+    def process_Break(self, parent, node):
         pass
 
-    def visit_Continue(self, parent, node):
+    def process_Continue(self, parent, node):
         pass
 
-    def visit_Exit(self, parent, node):
+    def process_Exit(self, parent, node):
         pass
 
-    def visit_TypeString(self, parent, node):
+    def process_TypeString(self, parent, node):
         pass
 
-    def visit_Type(self, parent, node):
+    def process_Type(self, parent, node):
         pass
 
-    def visit_Int(self, parent, node):
+    def process_Int(self, parent, node):
         pass
 
-    def visit_Char(self, parent, node):
+    def process_Char(self, parent, node):
         pass
 
-    def visit_String(self, parent, node):
+    def process_String(self, parent, node):
         pass
 
-    def visit_Real(self, parent, node):
+    def process_Real(self, parent, node):
         pass
 
-    def visit_Boolean(self, parent, node):
+    def process_Boolean(self, parent, node):
         pass
 
-    def visit_Id(self, parent, node):
+    def process_Id(self, parent, node):
         pass
 
-    def visit_BinOp(self, parent, node):
+    def process_BinOp(self, parent, node):
         pass
 
-    def visit_UnOp(self, parent, node):
+    def process_UnOp(self, parent, node):
         pass
 
-    def visit_Where(self, parent, node):
+    def process_Where(self, parent, node):
         pass
 
-    def visit_BoolValue(self, parent, node):
+    def process_BoolValue(self, parent, node):
         pass
 
-    def visit_FormattedArg(self, parent, node):
+    def process_FormattedArg(self, parent, node):
         pass
 
     def symbolize(self):

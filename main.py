@@ -7,7 +7,7 @@ from symbols import *
 DEBUG = True  
 
 if DEBUG:
-    test_id = '20'
+    test_id = '22'
     path_root = 'tests/'
     args = {}
     args['src'] = f'{path_root}{test_id}/src.pas'
@@ -46,17 +46,17 @@ class Grapher(Processor):
         src, dest = parent._index, node._index
         self.dot.edge('node{}'.format(src), 'node{}'.format(dest))
 
-    def visit_Program(self, parent, node):
+    def process_Program(self, parent, node):
         self.add_node(parent, node)
         for n in node.nodes:
             self.process(node, n)
 
-    def visit_Variables(self, parent, node):
+    def process_Variables(self, parent, node):
         self.add_node(parent, node)
         for n in node.vars:
             self.process(node, n)
 
-    def visit_FuncImpl(self, parent, node):
+    def process_FuncImpl(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.type_)
         self.process(node, node.id_)
@@ -64,19 +64,19 @@ class Grapher(Processor):
         self.process(node, node.block)
         self.process(node, node.var)
 
-    def visit_ProcImpl(self, parent, node):
+    def process_ProcImpl(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.id_)
         self.process(node, node.params)
         self.process(node, node.block)
         self.process(node, node.var)
 
-    def visit_Decl(self, parent, node):
+    def process_Decl(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.type_)
         self.process(node, node.id_)
 
-    def visit_ArrayDecl(self, parent, node):
+    def process_ArrayDecl(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.type_)
         self.process(node, node.id_)
@@ -85,136 +85,136 @@ class Grapher(Processor):
         if node.elems is not None:
             self.process(node, node.elems)
 
-    def visit_RepeatUntil(self, parent, node):
+    def process_RepeatUntil(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.cond)
         self.process(node, node.block)
 
-    def visit_ArrayElem(self, parent, node):
+    def process_ArrayElem(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.id_)
         self.process(node, node.index)
 
-    def visit_Assign(self, parent, node):
+    def process_Assign(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.id_)
         self.process(node, node.expr)
 
-    def visit_If(self, parent, node):
+    def process_If(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.cond)
         self.process(node, node.true)
         if node.false is not None:
             self.process(node, node.false)
 
-    def visit_While(self, parent, node):
+    def process_While(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.cond)
         self.process(node, node.block)
 
-    def visit_For(self, parent, node):
+    def process_For(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.init)
         self.process(node, node.cond)
         self.process(node, node.block)
         self.process(node, node.where)
 
-    def visit_FuncProcCall(self, parent, node):
+    def process_FuncProcCall(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.id_)
         self.process(node, node.args)
 
-    def visit_Block(self, parent, node):
+    def process_Block(self, parent, node):
 
         self.add_node(parent, node)
         for n in node.nodes:
             self.process(node, n)
 
-    def visit_Params(self, parent, node):
+    def process_Params(self, parent, node):
         self.add_node(parent, node)
         for p in node.params:
             self.process(node, p)
 
-    def visit_Args(self, parent, node):
+    def process_Args(self, parent, node):
         self.add_node(parent, node)
         for a in node.args:
             self.process(node, a)
 
-    def visit_Elems(self, parent, node):
+    def process_Elems(self, parent, node):
         self.add_node(parent, node)
         for e in node.elems:
             self.process(node, e)
 
-    def visit_Break(self, parent, node):
+    def process_Break(self, parent, node):
         self.add_node(parent, node)
 
-    def visit_Continue(self, parent, node):
+    def process_Continue(self, parent, node):
         self.add_node(parent, node)
 
-    def visit_Exit(self, parent, node):
+    def process_Exit(self, parent, node):
         self.add_node(parent, node)
         if node.value is not None:
             self.process(node, node.value)
 
-    def visit_Return(self, parent, node):
+    def process_Return(self, parent, node):
         self.add_node(parent, node)
         if node.expr is not None:
             self.process(node, node.expr)
 
-    def visit_Type(self, parent, node):
+    def process_Type(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
 
-    def visit_TypeString(self, parent, node):
+    def process_TypeString(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
         if node.size is not None:
             self.process(node, node.size)
 
-    def visit_Int(self, parent, node):
+    def process_Int(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
 
-    def visit_Char(self, parent, node):
+    def process_Char(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
 
-    def visit_String(self, parent, node):
+    def process_String(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
 
-    def visit_Real(self, parent, node):
+    def process_Real(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
 
-    def visit_Boolean(self, parent, node):
+    def process_Boolean(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
 
-    def visit_Id(self, parent, node):
+    def process_Id(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
 
-    def visit_BinOp(self, parent, node):
+    def process_BinOp(self, parent, node):
         name = node.symbol
         self.add_node(parent, node, name)
         self.process(node, node.first)
         self.process(node, node.second)
 
-    def visit_UnOp(self, parent, node):
+    def process_UnOp(self, parent, node):
         name = node.symbol
         self.add_node(parent, node, name)
         self.process(node, node.first)
 
-    def visit_Where(self, parent, node):
+    def process_Where(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
 
-    def visit_BoolValue(self, parent, node):
+    def process_BoolValue(self, parent, node):
         name = node.value
         self.add_node(parent, node, name)
 
-    def visit_FormattedArg(self, parent, node):
+    def process_FormattedArg(self, parent, node):
         self.add_node(parent, node)
         self.process(node, node.args)
         self.process(node, node.left)

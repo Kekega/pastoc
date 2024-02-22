@@ -238,11 +238,11 @@ class Processor():
     # Класс для обхода дерева. 
     # Предоставляет метод visit для каждого типа узла.
     def process(self, parent, node):
-        method = 'visit_' + type(node).__name__
-        visitor = getattr(self, method, self.die)
-        return visitor(parent, node)
+        method = 'process_' + type(node).__name__
+        processor = getattr(self, method, self.die)
+        return processor(parent, node)
 
     def die(self, parent, node):
     # Обработчик ошибки для случая отсутствия метода visit для конкретного типа узла.
-        method = 'visit_' + type(node).__name__
+        method = 'process_' + type(node).__name__
         raise ValueError("Missing method: {}".format(method))
