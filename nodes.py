@@ -235,7 +235,7 @@ class FormattedArg(Node):
 
 
 class Processor():
-    # Класс-посетитель для обхода AST. 
+    # Класс для обхода дерева. 
     # Предоставляет метод visit для каждого типа узла.
     def process(self, parent, node):
         method = 'visit_' + type(node).__name__

@@ -350,7 +350,6 @@ class Generator(Processor):
                     self.process(node, n)
 
                 self.append(')')
-                # if (i < len(node.args.args) - 1) or (len(node.args.args) == 1 and node.id_.value == ('writeln')):
                 self.append(';')
                 self.newline()
 

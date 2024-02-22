@@ -7,7 +7,7 @@ from symbols import *
 DEBUG = True  
 
 if DEBUG:
-    test_id = '20' 
+    test_id = '22' 
     path_root = 'tests/'
     args = {}
     args['src'] = f'{path_root}{test_id}/src.pas'
@@ -235,14 +235,21 @@ if __name__ == "__main__":
         print([(tok.class_, tok.lexeme) for tok in tokens])
         parser = Parser(tokens)
         ast = parser.parse()
-        print(ast)
+        # print(ast)
+
+        # for node in ast.nodes[0].params.params:
+        #     print(node)
 
         # grapher = Grapher(ast)
         # img = grapher.graph()
         # Image(img)
         # print(ast)
+
+        # from semantic import SemanticAnalyzer
+        # sem = SemanticAnalyzer()
+        # sem.analyze(ast)
+
         symbolizer = Symbolizer(ast)
         symbolizer.symbolize()
         generator = Generator(ast)
-        #code = generator.generate('main1.py')
         generator.generate(args['gen'])
