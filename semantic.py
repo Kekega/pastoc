@@ -8,6 +8,7 @@ class ElemVar:
     id : str
     type : str
     scope : str
+    limit : int = 0
     # params : list = []
 
 @dataclass
@@ -74,6 +75,20 @@ class SemanticAnalyzer:
 
             self.symbol_table[var_id].append(elem)
             # self.symbol_table[var_id] = var_type
+        elif isinstance(node, ArrayDecl):
+            var_id = node.id_.value
+            var_type = node.type_.value
+            var_limit = node.size
+
+            scope = self.scope_stack[-1]
+            elem = ElemVar(var_id, var_type, scope, var_limit)
+
+            self.scopes_table[scope].append(elem)
+
+            if not self.symbol_table.get(var_id):
+                self.symbol_table[var_id] = []
+
+            self.symbol_table[var_id].append(elem)
         elif isinstance(node, Assign):
             # Проверка, что переменная была объявлена
             var_id = node.id_.value
@@ -259,7 +274,7 @@ class SemanticAnalyzer:
             ct = self.get_expression_type(node.cond)
             assert(ct == 'boolean')
         else:
-            raise Exception(f"Not implemented {type(node)}. {node.value}") #return True
+            raise Exception(f"Not implemented {type(node)}.") #return True
 
     def process_bin_op(self, node) -> str:
         numeric = ['integer', 'real']
@@ -404,6 +419,12 @@ class SemanticAnalyzer:
             if var_id not in self.symbol_table:
                 raise ValueError(f"Variable '{var_id}' is used without declaration.")
             return self.symbol_table[var_id][-1].type
+        if isinstance(expr, ArrayElem):
+            # print(expr.index.value)
+            # assert expr.index.value.isdigit()
+
+            # assert(int(expr.index.value) < self.symbol_table[expr.id_.value][-1].limit)
+            return self.symbol_table[expr.id_.value][-1].type
         elif isinstance(expr, Int):
             return 'integer'
         elif isinstance(expr, Real):
