@@ -26,7 +26,7 @@ class ArrayDecl(Node):
         self.low = low
         self.high = high
         self.elems = elems
-        self.size = high.value -low.value +1
+        self.size = high.value - low.value + 1
 
 
 

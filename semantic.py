@@ -8,6 +8,22 @@ class ElemVar:
     id : str
     type : str
     scope : str
+    # params : list = []
+
+@dataclass
+class FuncVar:
+    id : str
+    type : str
+    scope : str
+    params : list
+
+
+safe_funcs = [
+    'read',
+    'readln',
+    'write',
+    'writeln'
+]
 
 class SemanticAnalyzer:
     def __init__(self):
@@ -15,6 +31,9 @@ class SemanticAnalyzer:
         }  # Таблица символов для отслеживания объявленных переменных и их типов
 
         self.scopes_table = {
+        }
+
+        self.func_table = {
         }
 
         self.scope_stack = []
@@ -47,7 +66,6 @@ class SemanticAnalyzer:
             # self.symbol_table[var_id] = var_type
         elif isinstance(node, Assign):
             # Проверка, что переменная была объявлена
-            print('assign')
             var_id = node.id_.value
             if var_id not in self.symbol_table:
                 raise ValueError(f"Variable '{var_id}' is used without declaration.")
@@ -56,6 +74,7 @@ class SemanticAnalyzer:
             assigned_type = self.get_expression_type(node.expr)
             declared_type = self.symbol_table[var_id][-1].type
             if assigned_type != declared_type:
+                print(var_id, node.expr)
                 raise ValueError(f"Type mismatch in assignment for variable '{var_id}'. Expected '{declared_type}', found '{assigned_type}'.")
         elif isinstance(node, BinOp):
             # соответствие типов при бинарной операции
@@ -72,15 +91,165 @@ class SemanticAnalyzer:
         elif isinstance(node, Block):
             for subnode in node.nodes:
                 self.analyze(subnode)
+        elif isinstance(node, For):
+            print(node.init, node.cond, node.block, node.where.value)
+            self.analyze(node.init)
+            if self.symbol_table[node.init.id_.value][-1].type != 'integer':
+                raise ValueError("Expected integer type in 'For' loop assignment")
+            
+            print(type(node.cond))
+            if isinstance(node.cond, Int):
+                pass
+            elif isinstance(node.cond, Int):
+                if self.symbol_table[node.cond.value][-1].type != 'integer':
+                    raise ValueError("Expected integer type in 'For' loop condition")
+            for subnode in node.block.nodes:
+                self.analyze(subnode)
+        elif isinstance(node, FuncProcCall):
+            if node.id_.value in safe_funcs:
+                print('?')
+                return None
+            else:
+                return self.func_table[self.scope_stack[-1]](node.id_.value)[-1].type
+                # raise Exception(f"Not implemented {type(node)}")
+        elif isinstance(node, FuncImpl):
+            if not self.func_table.get(self.scope_stack[-1]):
+                self.func_table[self.scope_stack[-1]] = []
+            
+
+            # for p in node.params.params:
+            #     print(p.type_.value)
+            params_list = [p.type_.value for p in node.params.params]
+            
+            new_func = FuncVar(
+                node.id_.value, 
+                node.type_.value, 
+                self.scope_stack[-1],
+                params_list
+            )
+            
+            # self.func_table[self.scope_stack[-1]].append(new_func)
+            self.scopes_table[self.scope_stack[-1]].append(new_func)
+
+            if not self.func_table.get(node.id_.value):
+                self.func_table[node.id_.value] = []
+            self.func_table[node.id_.value].append(new_func)
+
+            # добавили функцию для вызова в предыдущий scope. Теперь работаем с новым
+
+            self.scope_stack.append(node.id_.value)
+
+            
+            # Вызов самой себя (для рекуксии)
+            new_func = FuncVar(
+                node.id_.value, 
+                node.type_.value, 
+                self.scope_stack[-1],
+                params_list
+            )
+
+            self.func_table[node.id_.value].append(new_func)
+
+            f_var = ElemVar(node.id_.value, node.type_.value, self.scope_stack[-1]) 
+
+            self.scopes_table[node.id_.value] = [f_var, new_func]
+            self.symbol_table[node.id_.value] = [f_var]
+            print(self.scope_stack)
+
+            # Добавим параметры функции в её scope
+
+            for var_decl in node.params.params:
+                self.analyze(var_decl)
+
+            self.analyze(node.var)
+            self.analyze(node.block)
+
+            # for # pop
+            print("CLEANING", node.id_.value)
+            for elem in self.scopes_table[node.id_.value]:
+                print("DELETING", elem)
+                if isinstance(elem, ElemVar):
+                    self.symbol_table[elem.id].pop()
+                elif isinstance(elem, FuncVar):
+                    self.func_table[elem.id].pop()
+                else:
+                    raise Exception(f"{elem}, {type(elem)}")
+            
+            del self.scopes_table[node.id_.value]
+
+            self.scope_stack.pop()
+        
+        elif isinstance(node, ProcImpl):
+            if not self.func_table.get(self.scope_stack[-1]):
+                self.func_table[self.scope_stack[-1]] = []
+            
+
+            # for p in node.params.params:
+            #     print(p.type_.value)
+            params_list = [p.type_.value for p in node.params.params]
+            
+            new_func = FuncVar(
+                node.id_.value, 
+                'None', 
+                self.scope_stack[-1],
+                params_list
+            )
+            
+            # self.func_table[self.scope_stack[-1]].append(new_func)
+            self.scopes_table[self.scope_stack[-1]].append(new_func)
+
+            if not self.func_table.get(node.id_.value):
+                self.func_table[node.id_.value] = []
+            self.func_table[node.id_.value].append(new_func)
+
+            # добавили функцию для вызова в предыдущий scope. Теперь работаем с новым
+
+            self.scope_stack.append(node.id_.value)
+
+            # f_var = ElemVar(node.id_.value, node.type_.value, self.scope_stack[-1]) 
+
+            new_func = FuncVar(
+                node.id_.value, 
+                'None', 
+                self.scope_stack[-1],
+                params_list
+            )
+            self.func_table[node.id_.value].append(new_func)
+
+            self.scopes_table[node.id_.value] = [new_func]
+            self.symbol_table[node.id_.value] = []
+            print(self.scope_stack)
+
+            # Добавим параметры функции в её scope
+
+            for var_decl in node.params.params:
+                self.analyze(var_decl)
+            
+            self.analyze(node.var)
+            self.analyze(node.block)
+
+
+            # for # pop
+            for elem in self.scopes_table[node.id_.value]:
+                if isinstance(elem, ElemVar):
+                    self.symbol_table[elem.id].pop()
+                elif isinstance(elem, FuncVar):
+                    self.func_table[elem.id].pop()
+                else:
+                    raise Exception(f"{elem}, {type(elem)}")
+            
+            del self.scopes_table[node.id_.value]
+
+            self.scope_stack.pop()
         else:
-            return True
+            raise Exception(f"Not implemented {type(node)}") #return True
 
     def process_bin_op(self, node) -> str:
         numeric = ['integer', 'real']
         st = ['string', 'char']
         boole = ['boolean']
         assert isinstance(node, BinOp)
-        print(node.symbol, node.first, node.second)
+        # print(node.symbol, node.first, node.second)
         # if node.symbol in ['==']:
 
         if node.symbol in ['<', '>', '<=', '>=', '<>', '==']:
@@ -103,6 +272,7 @@ class SemanticAnalyzer:
 
             if first_type != second_type:
                 raise ValueError(f"Type mismatch in '{node.symbol}'. Found '{self.get_expression_type(node.first)}' and '{self.get_expression_type(node.second)}'.")
+            return 'boolean'
 
         elif node.symbol in ['+', '-', '*', '/']:
             # only numeric types allowed
@@ -112,6 +282,7 @@ class SemanticAnalyzer:
                 raise ValueError(f"Type mismatch in '{node.symbol}'. Only numeric types allowed, found '{first_type}'.")
             if second_type not in ['integer', 'real']:
                 raise ValueError(f"Type mismatch in '{node.symbol}'. Only numeric types allowed, found '{second_type}'.")
+            return 'integer'
         
         elif node.symbol in ['div', 'mod']:
             first_type = self.get_expression_type(node.first)
@@ -120,13 +291,29 @@ class SemanticAnalyzer:
                 raise ValueError(f"Type mismatch in '{node.symbol}'. Only integer types allowed, found '{first_type}'.")
             if second_type != 'integer':
                 raise ValueError(f"Type mismatch in '{node.symbol}'. Only integer types allowed, found '{second_type}'.")
+            return 'integer'
 
-        return 'boolean'
+        raise ValueError(f"Not implemented {node.symbol}")
+        # return 'boolean'
 
     def get_expression_type(self, expr):
+        if isinstance(expr, FuncProcCall):
+            if expr.id_.value not in self.func_table:
+                raise ValueError(f"Func or Proc '{expr.id_.value}' is used without declaration.")
+            
+            # Проверка количества аргументов функции
+            assert len(expr.args.args) == len(self.func_table[expr.id_.value][-1].params), f"Invalid parameter amount to {expr.id_.value}"
+
+            # Проверка типов переданных аргументов
+            for a, p in zip(expr.args.args, self.func_table[expr.id_.value][-1].params):
+                assert(self.symbol_table[a.value][-1].type == p), f"Type missmatch in {expr.id_.value} call"
+
+            return self.func_table[expr.id_.value][-1].type
         if isinstance(expr, Id):
             # Получите тип переменной из таблицы символов
             var_id = expr.value
+
+            # print()
             if var_id not in self.symbol_table:
                 raise ValueError(f"Variable '{var_id}' is used without declaration.")
             return self.symbol_table[var_id][-1].type
