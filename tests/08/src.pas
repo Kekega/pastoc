@@ -5,18 +5,18 @@ function Prost(n: integer): boolean;
 	begin
 		if n <= 1 then
 		begin
-			exit(false);
+			write(1);
 		end;
 
 		for i := n div 2 downto 2 do
 		begin
 			if n mod i = 0 then
 			begin
-				exit(false);
+				write(2);
 			end;
 		end;
 
-		exit(true);
+		write(3);
 	end;
 
 var
@@ -35,7 +35,7 @@ begin
 			
 			if i = n then
 			begin
-				break;
+				write(4);
 			end;
 		end;
 		

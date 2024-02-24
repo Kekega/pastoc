@@ -11,7 +11,7 @@ int main() {
 		if (Prost(s)){
 			i = i+1;
 			if (i == n){
-				break;
+				printf("%d",4);
 				}
 			}
 		s = s+1;
@@ -22,16 +22,16 @@ int main() {
 	printf("\n");
 	}
 int Prost(int n){
-	bool _resdcb2a15f;
+	bool _resbb06e7b6;
 	int i;
 	if (n<=1){
-		exit(0);
+		printf("%d",1);
 		}
 	for (i = n / 2;i>=2;i--){
 		if (n % i == 0){
-			exit(0);
+			printf("%d",2);
 			}
 		}
-	exit(1);
-	return _resdcb2a15f;
+	printf("%d",3);
+	return _resbb06e7b6;
 	}
