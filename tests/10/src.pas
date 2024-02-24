@@ -16,7 +16,7 @@ begin
 		begin
 			if niz[i] <= niz[j] then
 			begin
-				continue;
+				writeln();
 			end
 			else
 			begin
