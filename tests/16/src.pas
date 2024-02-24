@@ -1,11 +1,11 @@
 procedure fun1(a: integer);
 	begin
-		fun2(a, 999);
+		fun2(a, 777);
 	end;
 
 procedure fun2(a, b: integer);
 	begin
-		fun1(a + 1);
+		fun1(a + b);
 	end;
 
 var

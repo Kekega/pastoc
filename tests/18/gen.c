@@ -10,15 +10,15 @@ int main() {
 	printf("\n");
 	}
 int f1(int a){
-	int _resdaf2c9c4;
+	int _res7b8c1391;
 	int i;
 	int f2(int b){
-		int _reseb69bee8;
-		_reseb69bee8 = b+1;
-		return _reseb69bee8;
+		int _resf73f757e;
+		_resf73f757e = b+1;
+		return _resf73f757e;
 		};
 	for (i = 1;i<=5;i++){
-		_resdaf2c9c4 = a+1;
+		_res7b8c1391 = f2(i);
 		}
-	return _resdaf2c9c4;
+	return _res7b8c1391;
 	}

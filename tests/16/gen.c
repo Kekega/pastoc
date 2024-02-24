@@ -9,8 +9,8 @@ int main() {
 		}
 	}
 void fun1(int a){
-	fun2(a, 999);
+	fun2(a, 777);
 	}
 void fun2(int a, int b){
-	fun1(a+1);
+	fun1(a+b);
 	}

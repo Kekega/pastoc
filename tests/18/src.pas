@@ -1,4 +1,4 @@
-function f1(a: integer) : integer;
+function f1(a : integer) : integer;
     var i: integer;
     function f2(b: integer) : integer;
     begin
@@ -7,7 +7,7 @@ function f1(a: integer) : integer;
     begin        
         for i := 1 to 5 do
         begin
-            f1 := a + 1;
+            f1 := f2(i);
         end;
 
     end;

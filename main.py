@@ -3,12 +3,13 @@ from grapher import Grapher
 from lexer import Lexer
 from nodes import *
 from parser_pasc import Parser
+from semantic import SemanticAnalyzer
 from symbols import *
 
 DEBUG = True  
 
 if DEBUG:
-    test_id = '21'
+    test_id = '20'
     path_root = 'tests/'
     args = {}
     args['src'] = f'{path_root}{test_id}/src.pas'
@@ -31,7 +32,6 @@ if __name__ == "__main__":
         # print([(tok.class_, tok.lexeme) for tok in tokens])
         parser = Parser(tokens)
         ast = parser.parse()
-        # print(ast)
 
         # for node in ast.nodes[0].params.params:
         #     print(node)
@@ -41,9 +41,8 @@ if __name__ == "__main__":
         # Image(img)
         # print(ast)
 
-        # from semantic import SemanticAnalyzer
-        # sem = SemanticAnalyzer()
-        # sem.analyze(ast)
+        sem = SemanticAnalyzer()
+        sem.analyze(ast)
 
         symbolizer = Symbolizer(ast)
         symbolizer.symbolize()

@@ -1,7 +1,7 @@
 #include<stdio.h>
 int main() {
-	char c;
+	int c;
 	c = -1;
-	printf("%c",c);
+	printf("%d",c);
 	printf("\n");
 	}

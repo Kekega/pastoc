@@ -4,11 +4,7 @@ function f1(a: integer) : integer;
         f2 := b + 1;
     end;
     begin        
-        for i := 1 to 5 do
-        begin
-            f1 := a + 1;
-        end;
-
+        f1 := a + f2(a);
     end;
 
 var

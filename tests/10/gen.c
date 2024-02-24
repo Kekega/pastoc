@@ -12,7 +12,7 @@ int main() {
 	for (i = 1;i<=n;i++){
 		for (j = i+1;j<=n;j++){
 			if (niz[i-1]<=niz[j-1]){
-				continue;
+				printf("\n");
 				}else{
 				temp = niz[i-1];
 				niz[i-1] = niz[j-1];

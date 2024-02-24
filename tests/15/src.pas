@@ -1,5 +1,5 @@
 var
-	c: char;
+	c: integer;
 
 begin
 	{ comment }

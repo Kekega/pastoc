@@ -82,10 +82,10 @@ class Lexer:
             return Token(Class.WHILE, lexeme, self.row, self.col)
         elif lexeme == 'for':
             return Token(Class.FOR, lexeme, self.row, self.col)
-        elif lexeme == 'break':
-            return Token(Class.BREAK, lexeme, self.row, self.col)
-        elif lexeme == 'continue':
-            return Token(Class.CONTINUE, lexeme, self.row, self.col)
+        # elif lexeme == 'break':
+        #     return Token(Class.BREAK, lexeme, self.row, self.col)
+        # elif lexeme == 'continue':
+        #     return Token(Class.CONTINUE, lexeme, self.row, self.col)
         elif lexeme == 'integer' or lexeme == 'char':
             return Token(Class.TYPE, lexeme, self.row, self.col)
         elif lexeme == 'begin':

@@ -54,13 +54,15 @@ class SemanticAnalyzer:
         self.scope_stack = []
 
     def analyze(self, node):
-        # print(self.symbol_table, self.scopes_table, self.scope_stack, sep=' | ')
-        # print(node)
         if isinstance(node, Program):
             self.scope_stack.append('_')
             self.scopes_table['_'] = []
             for subnode in node.nodes:
                 self.analyze(subnode)
+            
+            for var, l_dec in self.symbol_table.items():
+                if l_dec and l_dec[-1].counter_used == 0:
+                    raise Exception(f"Unused variable {var}")
         elif isinstance(node, Variables):
             for var_decl in node.vars:
                 self.analyze(var_decl)
@@ -95,16 +97,20 @@ class SemanticAnalyzer:
             self.symbol_table[var_id].append(elem)
         elif isinstance(node, Assign):
             # Проверка, что переменная была объявлена
-            var_id = node.id_.value
+            if isinstance(node.id_, ArrayElem):
+                var_id = node.id_.id_.value
+            else:
+                var_id = node.id_.value
+
             if var_id not in self.symbol_table:
                 raise ValueError(f"Variable '{var_id}' is used without declaration.")
+
+            self.symbol_table[var_id][-1].counter_used += 1
 
             # Проверка соответствие типов при присваивании
             assigned_type = self.get_expression_type(node.expr)
             declared_type = self.symbol_table[var_id][-1].type
             if assigned_type != declared_type and dec_type_assosiations.get(declared_type, '-') != assigned_type:
-                # print(var_id, node.expr)
-
                 raise ValueError(f"Type mismatch in assignment for variable '{var_id}'. Expected '{declared_type}', found '{assigned_type}'.")
         elif isinstance(node, BinOp):
             # соответствие типов при бинарной операции
@@ -120,9 +126,10 @@ class SemanticAnalyzer:
 
         elif isinstance(node, Block):
             for subnode in node.nodes:
+                # print(subnode)
                 self.analyze(subnode)
+
         elif isinstance(node, For):
-            # print(node.init, node.cond, node.block, node.where.value)
             self.analyze(node.init)
             if self.symbol_table[node.init.id_.value][-1].type != 'integer':
                 raise ValueError("Expected integer type in 'For' loop assignment")
@@ -137,9 +144,30 @@ class SemanticAnalyzer:
                 self.analyze(subnode)
         elif isinstance(node, FuncProcCall):
             if node.id_.value in safe_funcs:
-                # print('?')
+                if node.id_.value in ['read', 'readln']:
+                    for a in node.args.args:
+                        if isinstance(a, ArrayElem):
+                            self.symbol_table[a.id_.value][-1].counter_used += 1
+                        elif isinstance(a, Id):
+                            self.symbol_table[a.value][-1].counter_used += 1
+                        else:
+                            pass
+
                 return None
             else:
+                for a in node.args.args:
+                    if isinstance(a, ArrayElem):
+                        self.symbol_table[a.id_.value][-1].counter_used += 1
+                    elif isinstance(a, Id):
+                        self.symbol_table[a.value][-1].counter_used += 1
+                    # elif isinstance(a, BinOp):
+                    else:
+                        self.analyze(a)
+                        # print(type(a))
+                        # pass
+    
+
+            
                 return self.func_table[self.scope_stack[-1]][-1].type # (node.id_.value)
                 # raise Exception(f"Not implemented {type(node)}")
         elif isinstance(node, FuncImpl):
@@ -225,7 +253,6 @@ class SemanticAnalyzer:
                 params_list
             )
             
-            # self.func_table[self.scope_stack[-1]].append(new_func)
             self.scopes_table[self.scope_stack[-1]].append(new_func)
 
             if not self.func_table.get(node.id_.value):
@@ -248,7 +275,7 @@ class SemanticAnalyzer:
             self.func_table[node.id_.value].append(new_func)
 
             self.scopes_table[node.id_.value] = [new_func]
-            self.symbol_table[node.id_.value] = []
+            # self.symbol_table[node.id_.value] = []
             # print(self.scope_stack)
 
             # Добавим параметры функции в её scope
@@ -261,9 +288,12 @@ class SemanticAnalyzer:
 
             # for # pop
             # print("CLEANING", node.id_.value)
+
             for elem in self.scopes_table[node.id_.value]:
                 # print("DELETING", elem)
                 if isinstance(elem, ElemVar):
+                    if self.symbol_table[elem.id][-1].counter_used == 0:
+                        raise Exception(f"Unused variable {elem.id}. Scope {self.scope_stack[-1]}")
                     self.symbol_table[elem.id].pop()
                 elif isinstance(elem, FuncVar):
                     self.func_table[elem.id].pop()
@@ -277,6 +307,16 @@ class SemanticAnalyzer:
             self.analyze(node.block)
             ct = self.get_expression_type(node.cond)
             assert(ct == 'boolean')
+        elif isinstance(node, Int):
+            return 'integer'
+        elif isinstance(node, Char):
+            return 'char'
+        elif isinstance(node, String):
+            return 'string'
+        elif isinstance(node, Char):
+            return 'char'
+        elif isinstance(node, Boolean):
+            return 'boolean'
         else:
             raise Exception(f"Not implemented {type(node)}.") #return True
 
@@ -346,6 +386,14 @@ class SemanticAnalyzer:
             if expr.id_.value not in self.func_table:
                 raise ValueError(f"Func or Proc '{expr.id_.value}' is used without declaration.")
             
+            for a in expr.args.args:
+                if isinstance(a, ArrayElem):
+                    self.symbol_table[a.id_.value][-1].counter_used += 1
+                elif isinstance(a, Id):
+                    self.symbol_table[a.value][-1].counter_used += 1
+                else:
+                    pass
+            
             # Проверка количества аргументов функции
             sc = self.func_table[expr.id_.value][-1].scope
 
@@ -408,7 +456,7 @@ class SemanticAnalyzer:
                     assert('real' == p), f"Type missmatch in {expr.id_.value} call"
                     break
                 else:
-                    print(a, p)
+                    # print(a, p)
                     assert(self.symbol_table[a.value][-1].type == p), f"Type missmatch in {expr.id_.value} call"
                     break
 
@@ -419,15 +467,11 @@ class SemanticAnalyzer:
             # Получите тип переменной из таблицы символов
             var_id = expr.value
 
-            # print()
             if var_id not in self.symbol_table:
                 raise ValueError(f"Variable '{var_id}' is used without declaration.")
+            self.symbol_table[var_id][-1].counter_used += 1
             return self.symbol_table[var_id][-1].type
         if isinstance(expr, ArrayElem):
-            # print(expr.index.value)
-            # assert expr.index.value.isdigit()
-
-            # assert(int(expr.index.value) < self.symbol_table[expr.id_.value][-1].limit)
             return self.symbol_table[expr.id_.value][-1].type
         elif isinstance(expr, Int):
             return 'integer'

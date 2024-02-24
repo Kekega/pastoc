@@ -9,11 +9,11 @@ int main() {
 	printf("\n");
 	}
 int recursivePower(int base, int exponent){
-	int _res1c07c36a;
+	int _resbafd69fc;
 	if (exponent == 0){
-		_res1c07c36a = 1;
+		_resbafd69fc = 1;
 		}else{
-		_res1c07c36a = base*recursivePower(base, exponent-1);
+		_resbafd69fc = base*recursivePower(base, exponent-1);
 		}
-	return _res1c07c36a;
+	return _resbafd69fc;
 	}
