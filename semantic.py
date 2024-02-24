@@ -9,6 +9,7 @@ class ElemVar:
     type : str
     scope : str
     limit : int = 0
+    counter_used : int = 0
     # params : list = []
 
 @dataclass
@@ -45,6 +46,9 @@ class SemanticAnalyzer:
                 FuncVar('ord', 'integer', '_', ['char']),
                 FuncVar('ord', 'integer', '_', ['boolean']),
                 ],
+            'chr' : [
+                FuncVar('chr', 'char', '_', ['integer'])
+            ]
         }
 
         self.scope_stack = []
