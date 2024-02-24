@@ -1,15 +1,15 @@
 var
 	c: char;
-    lo, hi: boolean;
+    l, h: boolean;
     d: integer;
 
 begin
 	readln(c);
 
-    lo := ord(c) >= ord('A');
-    hi := ord(c) <= ord('Z');
+    l := ord(c) >= ord('A');
+    h := ord(c) <= ord('Z');
 
-	if lo and hi then
+	if l and h then
 	begin
 		d := ord(c) + 32;
 	end

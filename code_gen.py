@@ -242,6 +242,7 @@ class Generator(Processor):
             self.process(node, node.args)
             self.append(')')
         elif node.id_.value == ('ord'):
+            self.append('(int)')
             self.process(node, node.args)
         elif node.id_.value == ('insert'):
             for i, n in enumerate(node.args.args):
@@ -256,6 +257,7 @@ class Generator(Processor):
                 if i == 0:
                     self.process(node, n)
         elif node.id_.value == ('chr'):
+            self.append('(char)')
             self.process(node, node.args)
         elif node.id_.value == ('readln') or node.id_.value == ('read'):
             for i, n in enumerate(node.args.args):
