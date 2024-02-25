@@ -87,13 +87,11 @@ class Parser:
                     id = Id(x)
                     vars.append(Decl(tip, id))
 
-
-                    # self.var_table[id] = self.var_table.get(id, []) + [parent]
-
                 lista.clear()
-
-            if self.curr.class_ == Class.SEMICOLON:
                 self.eat(Class.SEMICOLON)
+
+            # if self.curr.class_ == Class.SEMICOLON:
+            #     self.eat(Class.SEMICOLON)
 
         return Params(vars)
 
@@ -108,17 +106,11 @@ class Parser:
         # prev = None
         while self.curr.class_ != Class.BEGIN:
             if (self.curr.class_ == Class.FUNCTION):
-                # self.nodes.append(self.func())
-
                 funcs.append(self.func())
-
-                # print(self.nodes, "<<<<<")
             
             if (self.curr.class_ == Class.PROCEDURE):
-                # self.nodes.append(self.proc())
                 procs.append(self.proc())
 
-            # print(self.curr.class_)
             if (self.curr.class_ == Class.ID):
                 ids_list.append(self.curr.lexeme)
                 self.eat(Class.ID)
@@ -136,11 +128,6 @@ class Parser:
                         id = Id(x)
                         vars.append(Decl(tip, id))
                         
-                        # definitions = self.var_table.get(x, [])
-                        # if parent in definitions:
-                        #     raise ValueError(f"Redifinition of variable in same scope is not allowed {self.curr}")
-                        # self.var_table[x] = definitions.append(parent)
-
                     self.eat(Class.SEMICOLON)
 
                 elif self.curr.class_ == Class.ARRAY:
@@ -304,7 +291,7 @@ class Parser:
         elif self.curr.class_ == Class.DOWNTO:
             self.eat(Class.DOWNTO)
             where = 'downto'
-        logic = self.logic()
+        logic = self.expr()
         self.eat(Class.DO)
         self.eat(Class.BEGIN)
         block = self.block()
@@ -333,12 +320,6 @@ class Parser:
                 self.eat(Class.VAR)
                 vars, _, _ = self.variables()
                 nodes.append(vars)
-                ###
-            # elif self.curr.class_ == Class.FUNCTION:
-            #     nodes.append(self.func())
-            # elif self.curr.class_ == Class.PROCEDURE:
-            #     nodes.append(self.proc())
-            ###
             elif self.curr.class_ == Class.IF:
                 nodes.append(self.if_())
             elif self.curr.class_ == Class.WHILE:
@@ -354,9 +335,6 @@ class Parser:
             elif self.curr.class_ == Class.REPEAT:
                 nodes.append(self.repeat())
             elif self.curr.class_ == Class.ID:
-                # if self.curr.lexeme not in self.var_table and self.curr.lexeme not in self.overall_identifiers:
-                #     raise ValueError(f"Undefined variable {self.curr}")
-            
                 nodes.append(self.id_())
                 self.eat(Class.SEMICOLON)
             elif self.curr.class_ == Class.UNTIL:
@@ -469,8 +447,6 @@ class Parser:
             self.eat(Class.REAL)
             return value
         elif self.curr.class_ == Class.ID:
-            # if self.curr.lexeme not in self.var_table:
-            #     raise ValueError(f"Undefined variable {self.curr}")
             return self.id_()
         elif self.curr.class_ == Class.TRUE:
             self.eat(Class.TRUE)
