@@ -28,23 +28,15 @@ if __name__ == "__main__":
         text = source.read()
         lexer = Lexer(text)
         tokens = lexer.lex()
-        # print(tokens)
-        # print([(tok.class_, tok.lexeme) for tok in tokens])
         parser = Parser(tokens)
         ast = parser.parse()
-
-        # for node in ast.nodes[0].params.params:
-        #     print(node)
 
         # grapher = Grapher(ast)
         # img = grapher.graph()
         # Image(img)
-        # print(ast)
 
         sem = SemanticAnalyzer()
         sem.analyze(ast)
 
-        symbolizer = Symbolizer(ast)
-        symbolizer.symbolize()
         generator = Generator(ast)
         generator.generate(args['gen'])
