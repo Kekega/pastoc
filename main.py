@@ -38,5 +38,8 @@ if __name__ == "__main__":
         sem = SemanticAnalyzer()
         sem.analyze(ast)
 
+        symb = Symbolizer(ast)
+        symb.symbolize()
+
         generator = Generator(ast)
         generator.generate(args['gen'])
