@@ -88,10 +88,10 @@ class Parser:
                     vars.append(Decl(tip, id))
 
                 lista.clear()
-                self.eat(Class.SEMICOLON)
-
-            # if self.curr.class_ == Class.SEMICOLON:
-            #     self.eat(Class.SEMICOLON)
+                if self.curr.class_ != Class.RPAREN:
+                    self.eat(Class.SEMICOLON)
+            else:
+                self.die_deriv("parameter variables")
 
         return Params(vars)
 
@@ -248,25 +248,9 @@ class Parser:
         false = None
         if self.curr.class_ == Class.ELSE:
             self.eat(Class.ELSE)
-            if (self.curr.class_ == Class.IF):
-                self.eat(Class.IF)
-                cond2 = self.logic()
-                self.eat(Class.THEN)
-                self.eat(Class.BEGIN)
-                block2 = self.block()
-                self.eat(Class.END)
-                self.eat(Class.ELSE)
-                self.eat(Class.IF)
-                cond3 = self.logic()
-                self.eat(Class.THEN)
-                self.eat(Class.BEGIN)
-                block3 = self.block()
-                self.eat(Class.END)
-
-            else:
-                self.eat(Class.BEGIN)
-                false = self.block()
-                self.eat(Class.END)
+            self.eat(Class.BEGIN)
+            false = self.block()
+            self.eat(Class.END)
         self.eat(Class.SEMICOLON)
         return If(cond, true, false)
 
@@ -280,10 +264,17 @@ class Parser:
         if (self.curr.class_ == Class.SEMICOLON):
             self.eat(Class.SEMICOLON)
         return While(cond, block)
+    
+    def assign(self):
+        id_ = Id(self.curr.lexeme)
+        self.eat(Class.ID)
+        self.eat(Class.ASSIGN)
+        logic = self.logic()
+        return Assign(id_, logic)
 
     def for_(self):
         self.eat(Class.FOR)
-        init = self.id_()
+        init = self.assign()
         where = 'to'
         if self.curr.class_ == Class.TO:
             self.eat(Class.TO)
@@ -316,22 +307,12 @@ class Parser:
             for new_proc in prs:
                 nodes.append(new_proc)
         while self.curr.class_ != Class.END:
-            if self.curr.class_ == Class.VAR:
-                self.eat(Class.VAR)
-                vars, _, _ = self.variables()
-                nodes.append(vars)
-            elif self.curr.class_ == Class.IF:
+            if self.curr.class_ == Class.IF:
                 nodes.append(self.if_())
             elif self.curr.class_ == Class.WHILE:
                 nodes.append(self.while_())
             elif self.curr.class_ == Class.FOR:
                 nodes.append(self.for_())
-            elif self.curr.class_ == Class.BREAK:
-                nodes.append(self.break_())
-            elif self.curr.class_ == Class.CONTINUE:
-                nodes.append(self.continue_())
-            elif self.curr.class_ == Class.EXIT:
-                nodes.append(self.exit_())
             elif self.curr.class_ == Class.REPEAT:
                 nodes.append(self.repeat())
             elif self.curr.class_ == Class.ID:
@@ -388,26 +369,6 @@ class Parser:
         self.eat(Class.RBRACE)
         return Elems(elems)
 
-    def break_(self):
-        self.eat(Class.BREAK)
-        self.eat(Class.SEMICOLON)
-        return Break()
-
-    def exit_(self):
-        self.eat(Class.EXIT)
-        value = None
-        if self.curr.class_ == Class.LPAREN:
-            self.eat(Class.LPAREN)
-            value = self.logic()
-            self.eat(Class.RPAREN)
-        self.eat(Class.SEMICOLON)
-
-        return Exit(value)
-
-    def continue_(self):
-        self.eat(Class.CONTINUE)
-        self.eat(Class.SEMICOLON)
-        return Continue()
 
     def type_(self):
         if (self.curr.lexeme == 'string'):
@@ -470,14 +431,14 @@ class Parser:
             first = self.logic()
             self.eat(Class.RPAREN)
             return first
-        elif self.curr.class_ == Class.SEMICOLON:
-            return None
+        # elif self.curr.class_ == Class.SEMICOLON:
+        #     return None
         else:
             self.die_deriv(self.factor.__name__)
 
     def term(self):
         first = self.factor()
-        while self.curr.class_ in [Class.STAR, Class.FWDSLASH, Class.PERCENT, Class.MOD, Class.DIV]:
+        while self.curr.class_ in [Class.STAR, Class.FWDSLASH, Class.MOD, Class.DIV]:
             if self.curr.class_ == Class.STAR:
                 op = self.curr.lexeme
                 self.eat(Class.STAR)
@@ -486,11 +447,6 @@ class Parser:
             elif self.curr.class_ == Class.FWDSLASH:
                 op = self.curr.lexeme
                 self.eat(Class.FWDSLASH)
-                second = self.factor()
-                first = BinOp(op, first, second)
-            elif self.curr.class_ == Class.PERCENT:
-                op = self.curr.lexeme
-                self.eat(Class.PERCENT)
                 second = self.factor()
                 first = BinOp(op, first, second)
             elif self.curr.class_ == Class.MOD:
@@ -503,7 +459,6 @@ class Parser:
                 self.eat(Class.DIV)
                 second = self.factor()
                 first = BinOp(op, first, second)
-
         return first
 
     def expr(self):
@@ -601,6 +556,7 @@ class Parser:
 
     def die(self, text):
         self.error_message = text
+        raise ValueError(self.error_message)
 
     def die_deriv(self, fun):
         self.die(f"Derivation error: {fun} {self.curr} (row:{self.curr.row}, col:{self.curr.col})")

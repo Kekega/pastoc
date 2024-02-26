@@ -2,5 +2,5 @@
 int main() {
 	char c;
 	scanf("%c",&c);
-	printf("%c",(char)(int)c-32);
+	printf("%c",(char)((int)(c)-32));
 	}

@@ -1,29 +1,31 @@
-procedure fun1(a: integer);
-	begin
-		fun2(a, 777);
-	end;
+function f1(a : integer) : integer;
+    var i: integer;
+    function f2(b: integer) : integer;
+        var c: integer;
+        function f3(d: integer) : integer;
+            begin
+                b := b + 1;
+            end;
+        begin
+            f3(4);
+            f2 := b + c;
+        end;
+    begin        
+        for i := 1 to 5 do
+        begin
+            f1 := f2(i);
+        end;
 
-procedure fun2(a, b: integer);
-	begin
-		fun1(a + b);
-	end;
+    end;
 
 var
-	n: integer;
+	n, s: integer;
+
 
 begin
 	readln(n);
 
-	if n = 1 then
-	begin
-		write('x');
-	end
-	else if n = 2 then
-	begin
-		n := 3.14;
-	end
-	else if n = 3 then
-	begin
-		fun1(-999);
-	end;
+    s := f1(n);
+
+    writeln(s);
 end.

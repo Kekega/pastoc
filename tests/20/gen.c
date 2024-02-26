@@ -8,7 +8,7 @@ int main() {
 	printf("\n");
 	}
 int AddTwoNumbers(int a, int b){
-	int _res27d52dc2;
-	_res27d52dc2 = a+b;
-	return _res27d52dc2;
+	int _resdd9e;
+	_resdd9e = a+b;
+	return _resdd9e;
 	}

@@ -9,7 +9,7 @@ from symbols import *
 DEBUG = True  
 
 if DEBUG:
-    test_id = '07'
+    test_id = '00'
     path_root = 'tests/'
     args = {}
     args['src'] = f'{path_root}{test_id}/src.pas'
@@ -35,8 +35,8 @@ if __name__ == "__main__":
         # img = grapher.graph()
         # Image(img)
 
-        sem = SemanticAnalyzer()
-        sem.analyze(ast)
+        # sem = SemanticAnalyzer()
+        # sem.analyze(ast)
 
         symb = Symbolizer(ast)
         symb.symbolize()

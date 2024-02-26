@@ -22,7 +22,7 @@ int main() {
 	printf("\n");
 	}
 int Prost(int n){
-	bool _resf72957b9;
+	bool _resa4ab;
 	int i;
 	if (n<=1){
 		printf("%d",1);
@@ -33,5 +33,5 @@ int Prost(int n){
 			}
 		}
 	printf("%d",3);
-	return _resf72957b9;
+	return _resa4ab;
 	}

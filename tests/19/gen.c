@@ -9,10 +9,10 @@ int main() {
 	printf("\n");
 	}
 int f1(int a){
-	int _res30d13ecf;
+	int _rese386;
 	int i;
 	for (i = 1;i<=5;i++){
-		_res30d13ecf = a+1;
+		_rese386 = a+1;
 		}
-	return _res30d13ecf;
+	return _rese386;
 	}

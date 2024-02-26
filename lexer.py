@@ -179,6 +179,7 @@ class Lexer:
         # Получение следующего токена
         self.read_space()
         curr = self.next_char()
+
         if curr is None:
             return Token(Class.EOF, curr, self.row, self.col)
         token = None
@@ -273,8 +274,19 @@ class Lexer:
 
     def lex(self):
         tokens = []
+        last_tok_end = False
+
         while True:
             curr = self.next_token()
+            assert isinstance(curr, Token)
+            if curr.class_ == Class.END:
+                last_tok_end = True
+            elif curr.class_ == Class.DOT:
+                if last_tok_end:
+                    tokens.append(curr)
+                    tokens.append(Token(Class.EOF, curr, self.row, self.col))
+                else:
+                    last_tok_end = False
             tokens.append(curr)
             if curr.class_ == Class.EOF:
                 break

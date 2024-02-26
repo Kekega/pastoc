@@ -11,10 +11,22 @@ class Generator(Processor):
         self.level = 0
         self.lookup_table = {}
     
+    var_table = []
+    scope_stack = []
+
+    nested_funcs = {}
+
+    code_store = []
+    ready_code = []
+
+    processing = ""
 
     def append(self, text):
-        self.py += str(text)
-
+        if len(self.scope_stack) < 2:
+            self.py += str(text)
+            return
+        self.code_store[-1] += str(text)
+        
 
     def addtoStart(self, text):
         self.py = text + '\n' + self.py
@@ -41,7 +53,7 @@ class Generator(Processor):
             if isinstance(n, FuncImpl):
                 self.process(node, n)
 
-        pass
+        print(self.nested_funcs)
 
     def process_Decl(self, parent, node):
         self.process(node, node.type_)
@@ -75,6 +87,7 @@ class Generator(Processor):
             self.append(' = ')
             self.process(node, node.expr)
         else:
+            # print(node.id_.value, 'fddddddddddddddddd')
             self.append(self.lookup_table[node.id_.value])
             self.append(' = ')
             self.process(node, node.expr)
@@ -148,22 +161,31 @@ class Generator(Processor):
         self.newline()
 
     def process_FuncImpl(self, parent, node):
+        assert isinstance(node, FuncImpl)
+        for scope in self.scope_stack:
+            self.nested_funcs[scope].append(node.id_.value)
+        self.nested_funcs[node.id_.value] = []
+        self.var_table.append([])
+        self.scope_stack.append(node.id_.value)
+        if len(self.scope_stack) >= 2:
+            print(node.id_.value, self.nested_funcs, self.scope_stack, ">=2")
+            self.code_store.append("")
         self.newline()
         self.process(node, node.type_)
-        # self.append(' ')
         self.process(node, node.id_)
         self.append('(')
         self.process(node, node.params)
         self.append(')')
-        x = self.py.split('\n')
 
+        if len(self.scope_stack) < 2:
+            x = self.py.split('\n')
+        else:
+            x = self.code_store[-1].split('\n')
         self.addtoStart(x[-1] + ';')
+
+
         self.append('{')
         self.newline()
-
-
-        # self.append(node.type_.value + ' ')
-
 
         ###
         node_type = node.type_.value
@@ -175,8 +197,9 @@ class Generator(Processor):
             self.append('float ')
         elif node_type == 'boolean':
             self.append('bool ')
-        random_uuid = str(uuid.uuid4())[:8]
+        random_uuid = str(uuid.uuid4())[:4]
         var_name = f"_res{random_uuid}"
+        self.var_table[-1].append((node_type, var_name))
 
         self.lookup_table[node.id_.value] = var_name
 
@@ -185,18 +208,20 @@ class Generator(Processor):
 
         self.process(node, node.var)
         self.process(node, node.block)
-        # self.vis_block(node, node.block, node.id_)
         self.newline()
-
-        ###
 
         self.append('return ')
         self.append(self.lookup_table[node.id_.value] + ';')
         self.newline()
         
         del self.lookup_table[node.id_.value]
-
         self.append('}')
+        if self.code_store:
+            self.ready_code.append(self.code_store.pop())
+
+        self.var_table.pop()
+        self.scope_stack.pop()
+
             
     def vis_block(self, parent, node, id_):
         for n in node.nodes:
@@ -210,10 +235,6 @@ class Generator(Processor):
             else:
                 self.append(';')
             self.newline()
-        # self.append('return ')
-        # self.append(self.assosiate_table[id_] + ';')
-        
-        # del self.assosiate_table[id_]
 
     def process_ProcImpl(self, parent, node):
         self.newline()
@@ -242,8 +263,9 @@ class Generator(Processor):
             self.process(node, node.args)
             self.append(')')
         elif node.id_.value == ('ord'):
-            self.append('(int)')
+            self.append('(int)(')
             self.process(node, node.args)
+            self.append(')')
         elif node.id_.value == ('insert'):
             for i, n in enumerate(node.args.args):
                 if i == 1:
@@ -257,8 +279,9 @@ class Generator(Processor):
                 if i == 0:
                     self.process(node, n)
         elif node.id_.value == ('chr'):
-            self.append('(char)')
+            self.append('(char)(')
             self.process(node, node.args)
+            self.append(')')
         elif node.id_.value == ('readln') or node.id_.value == ('read'):
             for i, n in enumerate(node.args.args):
                 self.append('scanf(')
@@ -359,6 +382,7 @@ class Generator(Processor):
             if node.id_.value == ('writeln'):
                 self.append('printf("\\n")')
         else:
+            self.processing = node.id_.value
             self.process(node, node.id_)
             self.append('(')
             self.process(node, node.args)
@@ -373,46 +397,72 @@ class Generator(Processor):
                 pass
             elif isinstance(n, While):
                 pass
+            elif isinstance(n, FuncImpl) or isinstance(n, ProcImpl):
+                pass
             else:
                 self.append(';')
+                # pass
             self.newline()
 
     def process_Params(self, parent, node):
+        t = 0
         for i, p in enumerate(node.params):
+            t += 1
+            if self.var_table:
+                self.var_table[-1].append((p.type_.value, p.id_.value))
             if i > 0:
                 self.append(', ')
             self.process(node, p)
+        
+        for i in range(len(self.var_table) - 1):
+            for p in self.var_table[i]:
+                if p[0] == 'real':
+                    self.append(', ' * (t>0) + 'float ')
+                if p[0] == 'integer':
+                    self.append(', ' * (t>0) + 'int ')
+                if p[0] == 'boolean':
+                    self.append(', ' * (t>0) + 'bool ')
+                if p[0] == 'string':
+                    self.append(', ' * (t>0) + 'char[] ')
+                if p[0] == 'char':
+                    self.append(', ' * (t>0) + 'char ')
+                self.append(f"*{p[1]}")
+                t += 1
 
     def process_Variables(self, parent, node):
         for n in node.vars:
+            if self.var_table:
+                self.var_table[-1].append((n.type_.value, n.id_.value))
             self.process(node, n)
             self.append(';')
             self.newline()
 
     def process_Args(self, parent, node):
+        # вызов функции
+        t = 0
         for i, a in enumerate(node.args):
+            t += 1
             if i > 0:
                 self.append(', ')
             self.process(node, a)
+        
+        if self.scope_stack and self.processing not in self.nested_funcs[self.scope_stack[-1]]:
+            return
+        if self.var_table:
+            for i in range(len(self.var_table)):
+                for p in self.var_table[i]:
+                    if i < len(self.var_table) - 1:
+                        self.append(', '* (t>0) + f'{p[1]}')
+                    else:
+                        self.append(', '* (t>0) + f'&{p[1]}')
+                    t += 1
+                
 
     def process_Elems(self, parent, node):
         for i, e in enumerate(node.elems):
             if i > 0:
                 self.append(', ')
             self.process(node, e)
-
-    def process_Break(self, parent, node):
-        self.append('break')
-
-    def process_Continue(self, parent, node):
-        self.append('continue')
-
-    def process_Exit(self, parent, node):
-        self.append('return')
-        if node.value is not None:
-            self.append('(')
-            self.process(node, node.value)
-            self.append(')')
 
     def process_TypeString(self, parent, node):
         self.append('char ')
@@ -448,6 +498,13 @@ class Generator(Processor):
             self.append('0')
 
     def process_Id(self, parent, node):
+        if self.scope_stack:
+            for k in range(len(self.var_table) - 1):
+                for v in self.var_table[k]:
+                    if node.value == v[1]:
+                        self.append('*')
+                        self.append(node.value)
+                        return
         self.append(node.value)
 
     def process_BinOp(self, parent, node):
@@ -513,6 +570,12 @@ class Generator(Processor):
 
     def generate(self, path):
         self.process(None, self.ast)
+
+
+        print(self.code_store)
+        for code in self.ready_code:
+            self.py += code
+
         self.py = "#include<stdio.h>\n\n\n" + self.py
         self.py = re.sub('\n\s*\n', '\n', self.py)
         self.py = self.format_c_code(self.py)
