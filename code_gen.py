@@ -53,7 +53,7 @@ class Generator(Processor):
             if isinstance(n, FuncImpl):
                 self.process(node, n)
 
-        print(self.nested_funcs)
+        # print(self.nested_funcs)
 
     def process_Decl(self, parent, node):
         self.process(node, node.type_)
@@ -168,7 +168,7 @@ class Generator(Processor):
         self.var_table.append([])
         self.scope_stack.append(node.id_.value)
         if len(self.scope_stack) >= 2:
-            print(node.id_.value, self.nested_funcs, self.scope_stack, ">=2")
+            # print(node.id_.value, self.nested_funcs, self.scope_stack, ">=2")
             self.code_store.append("")
         self.newline()
         self.process(node, node.type_)
@@ -237,22 +237,43 @@ class Generator(Processor):
             self.newline()
 
     def process_ProcImpl(self, parent, node):
+        for scope in self.scope_stack:
+            self.nested_funcs[scope].append(node.id_.value)
+        self.nested_funcs[node.id_.value] = []
+        self.var_table.append([])
+        self.scope_stack.append(node.id_.value)
+        if len(self.scope_stack) >= 2:
+            # print(node.id_.value, self.nested_funcs, self.scope_stack, ">=2")
+            self.code_store.append("")
         self.newline()
         self.append('void ')
+        # self.process(node, node.type_)
         self.process(node, node.id_)
         self.append('(')
         self.process(node, node.params)
         self.append(')')
-        x = self.py.split('\n')
 
-        self.addtoStart(x[-1] + ';\n')
+        if len(self.scope_stack) < 2:
+            x = self.py.split('\n')
+        else:
+            x = self.code_store[-1].split('\n')
+        self.addtoStart(x[-1] + ';')
+
+
         self.append('{')
-
         self.newline()
+
         self.process(node, node.var)
         self.process(node, node.block)
         self.newline()
+        
         self.append('}')
+        if self.code_store:
+            self.ready_code.append(self.code_store.pop())
+
+        self.var_table.pop()
+        self.scope_stack.pop()
+
 
     def process_FuncProcCall(self, parent, node):
         if node.id_.value == ('inc'):
@@ -572,7 +593,7 @@ class Generator(Processor):
         self.process(None, self.ast)
 
 
-        print(self.code_store)
+        # print(self.code_store)
         for code in self.ready_code:
             self.py += code
 
