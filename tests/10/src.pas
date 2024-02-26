@@ -2,6 +2,8 @@ var
 	niz : array[1..100] of integer;
 	i, j, n, temp: integer;
 
+program test;
+
 begin
 	readln(n);
 

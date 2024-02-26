@@ -1,3 +1,5 @@
+program test;
+
 var
 	a1, b1, a2, b2, p1, p2: real;
 

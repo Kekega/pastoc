@@ -1,3 +1,5 @@
+program test;
+
 var
   arr: array[1..100] of integer;
   size, index, offset: integer;

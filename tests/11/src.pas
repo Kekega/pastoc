@@ -1,3 +1,5 @@
+program test;
+
 var
   numbersA, numbersB, numbersC: array[1..100] of integer;
   size, indexA, indexB, indexC, i: integer;

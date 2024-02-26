@@ -1,3 +1,5 @@
+program test;
+
 function AddTwoNumbers(a, b: integer): integer;
 begin
   AddTwoNumbers := a + b;

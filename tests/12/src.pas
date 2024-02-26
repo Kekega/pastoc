@@ -1,3 +1,5 @@
+program test;
+
 var
   occurrences: array[1..1005] of integer;
   size, index, maxOccurrence, element, resultElement : integer;

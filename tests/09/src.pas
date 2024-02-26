@@ -1,3 +1,5 @@
+program test;
+
 function recursivePower(base, exponent: integer): integer;
 begin
   if exponent = 0 then

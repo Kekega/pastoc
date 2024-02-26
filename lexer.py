@@ -72,8 +72,11 @@ class Lexer:
     def read_keyword(self):
         # Чтение ключевых слов
         lexeme = self.text[self.pos]
+
         while self.pos + 1 < self.len and self.text[self.pos + 1].isalnum() or self.text[self.pos + 1] == '_':
             lexeme += self.next_char()
+        if lexeme == 'program':
+            return 'program'
         if lexeme == 'if':
             return Token(Class.IF, lexeme, self.row, self.col)
         elif lexeme == 'else':
@@ -174,6 +177,7 @@ class Lexer:
                 raise ValueError("No EOF Token")
             eaten += ch
         self.read_space()
+    
         
     def next_token(self):
         # Получение следующего токена
@@ -275,6 +279,13 @@ class Lexer:
     def lex(self):
         tokens = []
         last_tok_end = False
+
+        curr = self.next_token()
+        assert curr == 'program'
+        curr = self.next_token()
+        assert curr.class_ == Class.ID
+        curr = self.next_token()
+        assert curr.class_ == Class.SEMICOLON
 
         while True:
             curr = self.next_token()

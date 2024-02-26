@@ -1,3 +1,5 @@
+program test;
+
 function f1(a: integer) : integer;
     function f2(b: integer) : integer;
     begin

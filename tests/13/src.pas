@@ -1,3 +1,5 @@
+program test;
+
 var
   numbers: array[1..100] of integer;
   index, size, currentSum, maxSum : integer;

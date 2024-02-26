@@ -1,3 +1,5 @@
+program test;
+
 var
 	i, j, n: integer;
 

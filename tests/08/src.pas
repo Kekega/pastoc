@@ -1,3 +1,5 @@
+program test;
+
 function Prost(n: integer): boolean;
 	var
 		i: integer;
