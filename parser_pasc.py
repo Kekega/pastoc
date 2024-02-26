@@ -119,7 +119,6 @@ class Parser:
                 self.eat(Class.COMMA)
 
             elif (self.curr.class_ == Class.COLON):
-                # was_colon = True
                 self.eat(Class.COLON)
 
                 if self.curr.class_ == Class.TYPE:
@@ -148,14 +147,6 @@ class Parser:
                         for x in ids_list:
                             vars.append(ArrayDecl(tip, Id(x), low, high, elements))
                         self.eat(Class.SEMICOLON)
-                    elif (self.curr.class_ == Class.EQSIGN):
-                        self.eat(Class.EQSIGN)
-                        self.eat(Class.LPAREN)
-                        elements = self.elems()
-                        self.eat(Class.RPAREN)
-                        self.eat(Class.SEMICOLON)
-                        vars.append(ArrayDecl(tip, Id(ids_list[0]), low, high, elements))
-
                 ids_list.clear()
 
         return Variables(vars), funcs, procs
