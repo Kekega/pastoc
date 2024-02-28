@@ -43,6 +43,7 @@ class Parser:
         return wrapper
     
     def eat(self, class_):
+        # print(self.curr.class_)
         if self.curr.class_ == class_:
             self.prev = self.curr
             self.curr = self.tokens.pop(0)
@@ -50,6 +51,8 @@ class Parser:
             self.die_type(class_.name, self.curr.class_.name)
 
     def program(self):
+        # <program> ::= (<proc> | <func> | <var> | <main_program>) <EOF>
+        # <main_program> ::= "begin" <block> "end" "."
         nodes = []
         while self.curr.class_ != Class.EOF:
             if self.curr.class_ == Class.PROCEDURE:
@@ -62,49 +65,61 @@ class Parser:
                 nodes.append(vars)
             elif self.curr.class_ == Class.BEGIN:
                 self.eat(Class.BEGIN)
-                nodes.append(self.block())
+                nodes.append(self.block(multiline=True))
                 self.eat(Class.END)
                 self.eat(Class.DOT)
             else:
                 self.die_deriv(self.program.__name__)
         return Program(nodes)
 
-    def parVars(self, parent = '_'): ##########
+    def parVars(self, parent = '_'): 
+        # <parVars> ::= (<id> ("," <id>)* ":" <type>)*
         vars = []
         lista = []
         while self.curr.class_ != Class.RPAREN:
             if (self.curr.class_ == Class.ID):
                 lista.append(self.curr.lexeme)
                 self.eat(Class.ID)
+            
+                while (self.curr.class_ == Class.COMMA):
+                    self.eat(Class.COMMA)
+                    if self.curr.class_ == Class.ID:
+                        lista.append(self.curr.lexeme)
+                        self.eat(Class.ID)
+                    else:
+                        self.die_deriv("parVars")
 
-            elif (self.curr.class_ == Class.COMMA):
-                self.eat(Class.COMMA)
+                if (self.curr.class_ == Class.COLON):
+                    self.eat(Class.COLON)
+                    tip = self.type_()
+                    for x in lista:
+                        id = Id(x)
+                        vars.append(Decl(tip, id))
 
-            elif (self.curr.class_ == Class.COLON):
-                self.eat(Class.COLON)
-                tip = self.type_()
-                for x in lista:
-                    id = Id(x)
-                    vars.append(Decl(tip, id))
-
-                lista.clear()
-                if self.curr.class_ != Class.RPAREN:
-                    self.eat(Class.SEMICOLON)
+                    lista.clear()
+                    if self.curr.class_ != Class.RPAREN:
+                        self.eat(Class.SEMICOLON)
+                else:
+                    self.die_deriv("parVars")
+                
             else:
-                self.die_deriv("parameter variables")
+                self.die_deriv("parVars")
 
         return Params(vars)
 
     def variables(self, parent='_'):
-        # parent == '_' => parent - program
+        # variables = (func? proc? (ID ("," ID)* ":" (type | <array_decl>) ";")*
+        # <array_decl> ::= "array" "[" <INT> "." "." <INT> "]" "of" <type>
+
         vars = []
         ids_list = []
 
         funcs = []
         procs = []
-        # was_colon = False
-        # prev = None
+
+        t = ''
         while self.curr.class_ != Class.BEGIN:
+
             if (self.curr.class_ == Class.FUNCTION):
                 funcs.append(self.func())
             
@@ -115,43 +130,54 @@ class Parser:
                 ids_list.append(self.curr.lexeme)
                 self.eat(Class.ID)
 
-            elif (self.curr.class_ == Class.COMMA):
-                self.eat(Class.COMMA)
+                while (self.curr.class_ == Class.COMMA):
+                    self.eat(Class.COMMA)
+                    if (self.curr.class_ == Class.ID):
+                        ids_list.append(self.curr.lexeme)
+                        self.eat(Class.ID)
+                    else:
+                        self.die_deriv("variables")
 
-            elif (self.curr.class_ == Class.COLON):
-                self.eat(Class.COLON)
+                if (self.curr.class_ == Class.COLON):
+                    self.eat(Class.COLON)
 
-                if self.curr.class_ == Class.TYPE:
-                    tip = self.type_()
-                    for x in ids_list:
-                        id = Id(x)
-                        vars.append(Decl(tip, id))
-                        
-                    self.eat(Class.SEMICOLON)
-
-                elif self.curr.class_ == Class.ARRAY:
-                    self.eat(Class.ARRAY)
-                    self.eat(Class.LBRACKET)
-                    low = Int(self.curr.lexeme)
-                    self.eat(Class.INT)
-                    self.eat(Class.DOT)
-                    self.eat(Class.DOT)
-                    high = Int(self.curr.lexeme)
-                    self.eat(Class.INT)
-                    self.eat(Class.RBRACKET)
-                    self.eat(Class.OF)
-                    tip = self.type_()
-                    elements = None
-
-                    if self.curr.class_ == Class.SEMICOLON:
+                    if self.curr.class_ == Class.TYPE:
+                        tip = self.type_()
                         for x in ids_list:
-                            vars.append(ArrayDecl(tip, Id(x), low, high, elements))
+                            id = Id(x)
+                            vars.append(Decl(tip, id))
+                            
                         self.eat(Class.SEMICOLON)
-                ids_list.clear()
+
+                    elif self.curr.class_ == Class.ARRAY:
+                        self.eat(Class.ARRAY)
+                        self.eat(Class.LBRACKET)
+                        low = Int(self.curr.lexeme)
+                        self.eat(Class.INT)
+                        self.eat(Class.DOT)
+                        self.eat(Class.DOT)
+                        high = Int(self.curr.lexeme)
+                        self.eat(Class.INT)
+                        self.eat(Class.RBRACKET)
+                        self.eat(Class.OF)
+                        tip = self.type_()
+                        elements = None
+
+                        if self.curr.class_ == Class.SEMICOLON:
+                            for x in ids_list:
+                                vars.append(ArrayDecl(tip, Id(x), low, high, elements))
+                            self.eat(Class.SEMICOLON)
+                    else:
+                        self.die_deriv('Variables')
+                    ids_list.clear()
+                    
+            else:
+                self.die_deriv('Variables')
 
         return Variables(vars), funcs, procs
 
     def proc(self):
+        # <proc> ::= "procedure" <id> "(" <parVars> ")" ";" <variables> "begin" <block> "end" ";"
         try:
             self.eat(Class.PROCEDURE)
             id_ = self.idDefines()
@@ -167,7 +193,7 @@ class Parser:
             if not vars:
                 vars = Variables(vars)
             self.eat(Class.BEGIN)
-            block = self.block(fs, prs)
+            block = self.block(multiline=True, fs=fs, prs=prs)
             self.eat(Class.END)
             self.eat(Class.SEMICOLON)
 
@@ -176,6 +202,7 @@ class Parser:
             raise ParsingError(f"procedure. {self.error_message}")
 
     def func(self):
+        # <func> ::= "function" <id> "(" <parVars> ")" ":" <type> ";" <variables> "begin" <block> "end" ";"
         try:
             self.eat(Class.FUNCTION)
             id_ = self.idDefines()
@@ -193,8 +220,9 @@ class Parser:
                 vars, fs, prs = self.variables()
             if not vars:
                 vars = Variables(vars)
+
             self.eat(Class.BEGIN)
-            block = self.block(fs, prs)
+            block = self.block(multiline=True, fs=fs, prs=prs)
             self.eat(Class.END)
             self.eat(Class.SEMICOLON)
             return FuncImpl(type_, id_, params, block, vars)
@@ -203,6 +231,10 @@ class Parser:
         
 
     def id_(self):
+        # <id_> ::= <FuncProcCall> | <ArrayElem> | <Assign> | <id>
+        # <FuncProcCall> ::= <id> "(" <args> ")"
+        # <ArrayElem> ::= <id> "[" <logic> "]"
+        # <Assign> ::= <id> ":=" <logic>
         is_array_elem = self.prev.class_ != Class.TYPE
         id_ = Id(self.curr.lexeme)
         self.eat(Class.ID)
@@ -213,7 +245,8 @@ class Parser:
             return FuncProcCall(id_, args)
         elif self.curr.class_ == Class.LBRACKET and is_array_elem:
             self.eat(Class.LBRACKET)
-            index = self.logic()
+            index = self.expr()
+            # index = self.logic()
             self.eat(Class.RBRACKET)
             id_ = ArrayElem(id_, index)
         if self.curr.class_ == Class.ASSIGN:
@@ -224,39 +257,67 @@ class Parser:
             return id_
 
     def idDefines(self):
-        is_array_elem = self.prev.class_ != Class.TYPE
+        # <id>
         id_ = Id(self.curr.lexeme)
         self.eat(Class.ID)
         return id_
 
     def if_(self):
+        # <if> ::= "if" <logic> "then" (<statement> | "begin" <statement>* "end") 
+        #               ("else" (<statement> | "begin" <statement>* "end"))? ";"
         self.eat(Class.IF)
         cond = self.logic()
         self.eat(Class.THEN)
-        self.eat(Class.BEGIN)
-        true = self.block()
-        self.eat(Class.END)
+        
+        if self.curr.class_ == Class.BEGIN:
+            self.eat(Class.BEGIN)
+            true = self.block(multiline=True)
+            self.eat(Class.END)
+            # self.eat(Class.SEMICOLON)
+        else:
+            true = self.block(multiline=False)
+        # self.eat(Class.BEGIN)
+        # true = self.block()
+        # self.eat(Class.END)
         false = None
         if self.curr.class_ == Class.ELSE:
             self.eat(Class.ELSE)
-            self.eat(Class.BEGIN)
-            false = self.block()
-            self.eat(Class.END)
+            if self.curr.class_ == Class.BEGIN:
+                self.eat(Class.BEGIN)
+                false = self.block(multiline=True)
+                self.eat(Class.END)
+                # self.eat(Class.SEMICOLON)
+            else:
+                false = self.block(multiline=False)
+            # self.eat(Class.BEGIN)
+            # false = self.block()
+            # self.eat(Class.END)
         self.eat(Class.SEMICOLON)
         return If(cond, true, false)
 
     def while_(self): 
+        # <while> ::= "while" <logic> "do" (<statement> | "begin" <statement>* "end" ";"?)
         self.eat(Class.WHILE)
         cond = self.logic()
         self.eat(Class.DO)
-        self.eat(Class.BEGIN)
-        block = self.block()
-        self.eat(Class.END)
-        if (self.curr.class_ == Class.SEMICOLON):
-            self.eat(Class.SEMICOLON)
+        # self.eat(Class.BEGIN)
+        # block = self.block()
+        # self.eat(Class.END)
+        if self.curr.class_ == Class.BEGIN:
+            self.eat(Class.BEGIN)
+            block = self.block(multiline=True)
+            self.eat(Class.END)
+            # self.eat(Class.SEMICOLON)
+            if (self.curr.class_ == Class.SEMICOLON):
+                self.eat(Class.SEMICOLON)
+        else:
+            block = self.block(multiline=False)
+        # if (self.curr.class_ == Class.SEMICOLON):
+        #     self.eat(Class.SEMICOLON)
         return While(cond, block)
     
     def assign(self):
+        # <assign> ::= <id> ":=" <logic>
         id_ = Id(self.curr.lexeme)
         self.eat(Class.ID)
         self.eat(Class.ASSIGN)
@@ -264,32 +325,57 @@ class Parser:
         return Assign(id_, logic)
 
     def for_(self):
+        # <for> ::= "for" <assign> ("to" | "downto") <expr> "do" (<statement> | "begin" <statement>* "end" ";")
         self.eat(Class.FOR)
         init = self.assign()
-        where = 'to'
+        # where = 'to'
         if self.curr.class_ == Class.TO:
             self.eat(Class.TO)
             where = 'to'
         elif self.curr.class_ == Class.DOWNTO:
             self.eat(Class.DOWNTO)
             where = 'downto'
+        else:
+            self.die_deriv("for")
         logic = self.expr()
         self.eat(Class.DO)
-        self.eat(Class.BEGIN)
-        block = self.block()
-        self.eat(Class.END)
-        self.eat(Class.SEMICOLON)
+        if self.curr.class_ == Class.BEGIN:
+            self.eat(Class.BEGIN)
+            block = self.block(multiline=True)
+            self.eat(Class.END)
+            self.eat(Class.SEMICOLON)
+        else:
+            block = self.block(multiline=False)
         return For(init, logic, block, Where(where))
 
     def repeat(self):
+        # <repeat> ::= "repeat" <statement>* "until" <logic> ";"
         self.eat(Class.REPEAT)
-        block = self.block()
+        block = self.block(multiline=True, repeat=True)
         self.eat(Class.UNTIL)
         cond = self.logic()
         self.eat(Class.SEMICOLON)
         return RepeatUntil(cond, block)
 
-    def block(self, fs = None, prs = None):
+    def statement(self):
+        # <statement> ::= (<if> | <while> | <for> | <repeat> | <id_> ";")
+        if self.curr.class_ == Class.IF:
+            return self.if_()
+        elif self.curr.class_ == Class.WHILE:
+            return self.while_()
+        elif self.curr.class_ == Class.FOR:
+            return self.for_()
+        elif self.curr.class_ == Class.REPEAT:
+            return self.repeat()
+        elif self.curr.class_ == Class.ID:
+            id = self.id_()
+            self.eat(Class.SEMICOLON)
+            return id
+        # elif self.curr.class_ == Class.UNTIL:
+        #     break
+        else:
+            self.die_deriv(self.block.__name__)
+    def block(self, multiline: bool, fs = None, prs = None, repeat: bool = False):
         nodes = []
         if fs:
             for new_func in fs:
@@ -297,25 +383,37 @@ class Parser:
         if prs:
             for new_proc in prs:
                 nodes.append(new_proc)
-        while self.curr.class_ != Class.END:
-            if self.curr.class_ == Class.IF:
-                nodes.append(self.if_())
-            elif self.curr.class_ == Class.WHILE:
-                nodes.append(self.while_())
-            elif self.curr.class_ == Class.FOR:
-                nodes.append(self.for_())
-            elif self.curr.class_ == Class.REPEAT:
-                nodes.append(self.repeat())
-            elif self.curr.class_ == Class.ID:
-                nodes.append(self.id_())
-                self.eat(Class.SEMICOLON)
-            elif self.curr.class_ == Class.UNTIL:
-                break
-            else:
-                self.die_deriv(self.block.__name__)
+
+        # if self.curr.class_
+            
+        if multiline:
+        
+            end_cond = Class.END if not repeat else Class.UNTIL
+
+            while self.curr.class_ != end_cond:
+                nodes.append(self.statement())
+        else:
+            nodes.append(self.statement())
+            # # вынести в statement
+            # if self.curr.class_ == Class.IF:
+            #     nodes.append(self.if_())
+            # elif self.curr.class_ == Class.WHILE:
+            #     nodes.append(self.while_())
+            # elif self.curr.class_ == Class.FOR:
+            #     nodes.append(self.for_())
+            # elif self.curr.class_ == Class.REPEAT:
+            #     nodes.append(self.repeat())
+            # elif self.curr.class_ == Class.ID:
+            #     nodes.append(self.id_())
+            #     self.eat(Class.SEMICOLON)
+            # elif self.curr.class_ == Class.UNTIL:
+            #     break
+            # else:
+            #     self.die_deriv(self.block.__name__)
         return Block(nodes)
 
     def params(self):
+        # <params> ::= <variables>*
         params = []
         while self.curr.class_ != Class.RPAREN:
             vars, _, _ = self.variables()
@@ -324,6 +422,7 @@ class Parser:
         return Params(params)
 
     def args(self):
+        # <args> ::= <>
         args = []
         while self.curr.class_ != Class.RPAREN:
             if len(args) > 0:
