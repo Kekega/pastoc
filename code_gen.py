@@ -53,8 +53,6 @@ class Generator(Processor):
             if isinstance(n, FuncImpl):
                 self.process(node, n)
 
-        # print(self.nested_funcs)
-
     def process_Decl(self, parent, node):
         self.process(node, node.type_)
         self.process(node, node.id_)
@@ -85,7 +83,6 @@ class Generator(Processor):
             self.append(' = ')
             self.process(node, node.expr)
         else:
-            # print(node.id_.value, 'fddddddddddddddddd')
             self.append(self.lookup_table[node.id_.value])
             self.append(' = ')
             self.process(node, node.expr)
@@ -165,7 +162,6 @@ class Generator(Processor):
         self.var_table.append([])
         self.scope_stack.append(node.id_.value)
         if len(self.scope_stack) >= 2:
-            # print(node.id_.value, self.nested_funcs, self.scope_stack, ">=2")
             self.code_store.append("")
         self.newline()
         self.process(node, node.type_)
@@ -184,7 +180,6 @@ class Generator(Processor):
         self.append('{')
         self.newline()
 
-        ###
         node_type = node.type_.value
         if node_type == 'integer':
             self.append('int ')
@@ -240,11 +235,9 @@ class Generator(Processor):
         self.var_table.append([])
         self.scope_stack.append(node.id_.value)
         if len(self.scope_stack) >= 2:
-            # print(node.id_.value, self.nested_funcs, self.scope_stack, ">=2")
             self.code_store.append("")
         self.newline()
         self.append('void ')
-        # self.process(node, node.type_)
         self.process(node, node.id_)
         self.append('(')
         self.process(node, node.params)
@@ -419,7 +412,6 @@ class Generator(Processor):
                 pass
             else:
                 self.append(';')
-                # pass
             self.newline()
 
     def process_Params(self, parent, node):

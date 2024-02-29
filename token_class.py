@@ -6,7 +6,6 @@ class Class(Enum):
     MINUS = auto()
     STAR = auto()
     FWDSLASH = auto()
-    PERCENT = auto()
 
     OR = auto()
     AND = auto()

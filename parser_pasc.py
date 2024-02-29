@@ -31,7 +31,7 @@ class Parser:
             self.die_type(class_.name, self.curr.class_.name)
 
     def program(self):
-        # <program> ::= (<proc> | <func> | <var> | <main_program>) <EOF>
+        # <program> ::= (<proc> | <func> | "var" <variables> | <main_program>) <EOF>
         # <main_program> ::= "begin" <block> "end" "."
         nodes = []
         while self.curr.class_ != Class.EOF:
@@ -94,7 +94,6 @@ class Parser:
         ids_list = []
 
         while self.curr.class_ == Class.ID:
-        # while self.curr.class_ != Class.BEGIN:
 
             if (self.curr.class_ == Class.ID):
                 ids_list.append(self.curr.lexeme)
@@ -144,7 +143,7 @@ class Parser:
         return Variables(vars)
 
     def proc(self):
-        # <proc> ::= "procedure" <id> "(" <parVars> ")" ";" <variables> 
+        # <proc> ::= "procedure" <id> "(" <parVars> ")" ";" ("var" <variables>)?
         #                               (<func> <proc>)* "begin" <block> "end" ";"
         try:
             self.eat(Class.PROCEDURE)
@@ -303,7 +302,6 @@ class Parser:
         # <for> ::= "for" <assign> ("to" | "downto") <expr> "do" (<statement> | "begin" <statement>* "end" ";")
         self.eat(Class.FOR)
         init = self.assign()
-        # where = 'to'
         if self.curr.class_ == Class.TO:
             self.eat(Class.TO)
             where = 'to'
@@ -403,7 +401,7 @@ class Parser:
 
     def factor(self):
         # <factor> ::= <int> | <char> | <string> | <boolean> | <real> | <id_> | 
-        #            | ("-" | "not") ("(" <compare> ")" | <factor>) | "(" <compare> ")"
+        #            ("-" | "not") ("(" <compare> ")" | <factor>) | "(" <compare> ")"
         if self.curr.class_ == Class.INT:
             value = Int(self.curr.lexeme)
             self.eat(Class.INT)
@@ -477,7 +475,7 @@ class Parser:
         return first
 
     def expr(self):
-        # <expr> ::= <term> (("+" | "-" | <or> | "xor") <term>)*
+        # <expr> ::= <term> (("+" | "-" | "or" | "xor") <term>)*
         first = self.term()
         while self.curr.class_ in [Class.PLUS, Class.MINUS, Class.OR, Class.XOR]:
             if self.curr.class_ == Class.PLUS:

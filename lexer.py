@@ -197,17 +197,6 @@ class Lexer:
             token = Token(Class.STAR, curr, self.row, self.col)
         elif curr == '/':
             token = Token(Class.FWDSLASH, curr, self.row, self.col)
-        elif curr == '%':
-            token = Token(Class.PERCENT, curr, self.row, self.col)
-        elif curr == '|':
-            curr = self.next_char()
-            if curr == '|':
-                token = Token(Class.OR, '||', self.row, self.col)
-            else:
-                self.die(curr)
-        elif curr == '!':
-            curr = self.next_char()
-            token = Token(Class.NOT, '!', self.row, self.col)
         elif curr == '=':
             curr = self.next_char()
             if curr == '=':
