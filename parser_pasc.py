@@ -179,7 +179,7 @@ class Parser:
             raise ParsingError(f"procedure. {self.error_message}")
 
     def func(self):
-        # <func> ::= "function" <id> "(" <parVars> ")" ":" <type> ";" <variables>
+        # <func> ::= "function" <id> "(" <parVars> ")" ":" <type> ";" ("var" <variables>)?
         #                       (<func> <proc>)* "begin" <block> "end" ";"
         try:
             self.eat(Class.FUNCTION)
