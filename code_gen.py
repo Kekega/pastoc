@@ -156,7 +156,6 @@ class Generator(Processor):
         else:
             self.process(node, node.cond)
         self.append(')')
-        self.newline()
 
     def process_FuncImpl(self, parent, node):
         assert isinstance(node, FuncImpl)

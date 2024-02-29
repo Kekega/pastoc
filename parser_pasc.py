@@ -24,7 +24,6 @@ class Parser:
     error_message = ""
     
     def eat(self, class_):
-        print(self.curr.class_)
         if self.curr.class_ == class_:
             self.prev = self.curr
             self.curr = self.tokens.pop(0)
@@ -227,7 +226,7 @@ class Parser:
         is_array_elem = self.prev.class_ != Class.TYPE
         id_ = Id(self.curr.lexeme)
         self.eat(Class.ID)
-        if self.curr.class_ == Class.LPAREN: # and self.is_func_call():
+        if self.curr.class_ == Class.LPAREN:
             self.eat(Class.LPAREN)
             args = self.args()
             self.eat(Class.RPAREN)
@@ -252,7 +251,7 @@ class Parser:
 
     def if_(self):
         # <if> ::= "if" <compare> "then" (<statement> | "begin" <statement>* "end") 
-        #               ("else" (<statement> | "begin" <statement>* "end"))? ";"
+                    #   (("else" (<statement> | "begin" <statement>* "end" ";")) | ";")
         self.eat(Class.IF)
         cond = self.compare()
         self.eat(Class.THEN)
@@ -273,6 +272,8 @@ class Parser:
                 self.eat(Class.SEMICOLON)
             else:
                 false = self.block(multiline=False)
+        else:
+            self.eat(Class.SEMICOLON)
         return If(cond, true, false)
 
     def while_(self): 

@@ -1,3 +1,5 @@
+program test;
+
 var
 	c: char;
 

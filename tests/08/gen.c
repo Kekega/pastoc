@@ -16,13 +16,12 @@ int main() {
 			}
 		s = s+1;
 		}
-	while (1)
-	;
+	while (0);
 	printf("%d",s);
 	printf("\n");
 	}
 int Prost(int n){
-	bool _resa4ab;
+	bool _res6f95;
 	int i;
 	if (n<=1){
 		printf("%d",1);
@@ -33,5 +32,5 @@ int Prost(int n){
 			}
 		}
 	printf("%d",3);
-	return _resa4ab;
+	return _res6f95;
 	}
