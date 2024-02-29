@@ -42,6 +42,7 @@ class Parser:
         return wrapper
     
     def eat(self, class_):
+        print(self.curr.class_)
         if self.curr.class_ == class_:
             self.prev = self.curr
             self.curr = self.tokens.pop(0)
@@ -250,12 +251,11 @@ class Parser:
         elif self.curr.class_ == Class.LBRACKET and is_array_elem:
             self.eat(Class.LBRACKET)
             index = self.expr()
-            # index = self.logic()
             self.eat(Class.RBRACKET)
             id_ = ArrayElem(id_, index)
         if self.curr.class_ == Class.ASSIGN:
             self.eat(Class.ASSIGN)
-            logic = self.logic()
+            logic = self.compare()
             return Assign(id_, logic)
         else:
             return id_
@@ -270,7 +270,7 @@ class Parser:
         # <if> ::= "if" <logic> "then" (<statement> | "begin" <statement>* "end") 
         #               ("else" (<statement> | "begin" <statement>* "end"))? ";"
         self.eat(Class.IF)
-        cond = self.logic()
+        cond = self.compare()
         self.eat(Class.THEN)
         
         if self.curr.class_ == Class.BEGIN:
@@ -286,15 +286,15 @@ class Parser:
                 self.eat(Class.BEGIN)
                 false = self.block(multiline=True)
                 self.eat(Class.END)
+                self.eat(Class.SEMICOLON)
             else:
                 false = self.block(multiline=False)
-        self.eat(Class.SEMICOLON)
         return If(cond, true, false)
 
     def while_(self): 
         # <while> ::= "while" <logic> "do" (<statement> | "begin" <statement>* "end" ";"?)
         self.eat(Class.WHILE)
-        cond = self.logic()
+        cond = self.compare()
         self.eat(Class.DO)
         if self.curr.class_ == Class.BEGIN:
             self.eat(Class.BEGIN)
@@ -311,7 +311,7 @@ class Parser:
         id_ = Id(self.curr.lexeme)
         self.eat(Class.ID)
         self.eat(Class.ASSIGN)
-        logic = self.logic()
+        logic = self.compare()
         return Assign(id_, logic)
 
     def for_(self):
@@ -343,7 +343,7 @@ class Parser:
         self.eat(Class.REPEAT)
         block = self.block(multiline=True, repeat=True)
         self.eat(Class.UNTIL)
-        cond = self.logic()
+        cond = self.compare()
         self.eat(Class.SEMICOLON)
         return RepeatUntil(cond, block)
 
@@ -397,7 +397,7 @@ class Parser:
         while self.curr.class_ != Class.RPAREN:
             if len(args) > 0:
                 self.eat(Class.COMMA)
-            logic = self.logic()
+            logic = self.compare()
 
             if (self.curr.class_ == Class.COLON):
                 self.eat(Class.COLON)
@@ -415,7 +415,7 @@ class Parser:
         while self.curr.class_ != Class.RPAREN:
             if len(elems) > 0:
                 self.eat(Class.COMMA)
-            elems.append(self.logic())
+            elems.append(self.compare())
         return Elems(elems)
 
     def arrayElems(self, low):
@@ -424,7 +424,7 @@ class Parser:
         while self.curr.class_ != Class.RBRACE:
             if len(elems) > 0:
                 self.eat(Class.COMMA)
-            elems.append(ArrayElem(self.logic(), ctr + low))
+            elems.append(ArrayElem(self.compare(), ctr + low))
             ctr += 1
         self.eat(Class.RBRACE)
         return Elems(elems)
@@ -481,14 +481,14 @@ class Parser:
             first = None
             if self.curr.class_ == Class.LPAREN:
                 self.eat(Class.LPAREN)
-                first = self.logic()
+                first = self.compare()
                 self.eat(Class.RPAREN)
             else:
                 first = self.factor()
             return UnOp(op.lexeme, first)
         elif self.curr.class_ == Class.LPAREN:
             self.eat(Class.LPAREN)
-            first = self.logic()
+            first = self.compare()
             self.eat(Class.RPAREN)
             return first
         # elif self.curr.class_ == Class.SEMICOLON:
@@ -498,7 +498,7 @@ class Parser:
 
     def term(self):
         first = self.factor()
-        while self.curr.class_ in [Class.STAR, Class.FWDSLASH, Class.MOD, Class.DIV]:
+        while self.curr.class_ in [Class.STAR, Class.FWDSLASH, Class.MOD, Class.DIV, Class.AND]:
             if self.curr.class_ == Class.STAR:
                 op = self.curr.lexeme
                 self.eat(Class.STAR)
@@ -519,11 +519,16 @@ class Parser:
                 self.eat(Class.DIV)
                 second = self.factor()
                 first = BinOp(op, first, second)
+            elif self.curr.class_ == Class.AND:
+                op = self.curr.lexeme
+                self.eat(Class.AND)
+                second = self.factor()
+                first = BinOp(op, first, second)
         return first
 
     def expr(self):
         first = self.term()
-        while self.curr.class_ in [Class.PLUS, Class.MINUS]:
+        while self.curr.class_ in [Class.PLUS, Class.MINUS, Class.OR]:
             if self.curr.class_ == Class.PLUS:
                 op = self.curr.lexeme
                 self.eat(Class.PLUS)
@@ -532,6 +537,11 @@ class Parser:
             elif self.curr.class_ == Class.MINUS:
                 op = self.curr.lexeme
                 self.eat(Class.MINUS)
+                second = self.term()
+                first = BinOp(op, first, second)
+            elif self.curr.class_ == Class.OR:
+                op = self.curr.lexeme
+                self.eat(Class.OR)
                 second = self.term()
                 first = BinOp(op, first, second)
         return first
@@ -571,30 +581,30 @@ class Parser:
         else:
             return first
 
-    def logic(self):
-        first = self.compare()
-        if self.curr.class_ == Class.AND:
-            op = self.curr.lexeme
-            self.eat(Class.AND)
-            second = self.compare()
-            return BinOp(op, first, second)
-        elif self.curr.class_ == Class.OR:
-            op = self.curr.lexeme
-            self.eat(Class.OR)
-            second = self.compare()
-            if (self.curr.class_ == Class.AND):
-                op2 = self.curr.lexeme
-                self.eat(Class.AND)
-                third = self.compare()
-                return BinOp(op2, BinOp(op, first, second), third)
-            return BinOp(op, first, second)
-        elif self.curr.class_ == Class.XOR:
-            op = self.curr.lexeme
-            self.eat(Class.XOR)
-            second = self.compare()
-            return BinOp(op, first, second)
-        else:
-            return first
+    # def logic(self):
+    #     first = self.compare()
+    #     if self.curr.class_ == Class.AND:
+    #         op = self.curr.lexeme
+    #         self.eat(Class.AND)
+    #         second = self.compare()
+    #         return BinOp(op, first, second)
+    #     elif self.curr.class_ == Class.OR:
+    #         op = self.curr.lexeme
+    #         self.eat(Class.OR)
+    #         second = self.compare()
+    #         if (self.curr.class_ == Class.AND):
+    #             op2 = self.curr.lexeme
+    #             self.eat(Class.AND)
+    #             third = self.compare()
+    #             return BinOp(op2, BinOp(op, first, second), third)
+    #         return BinOp(op, first, second)
+    #     elif self.curr.class_ == Class.XOR:
+    #         op = self.curr.lexeme
+    #         self.eat(Class.XOR)
+    #         second = self.compare()
+    #         return BinOp(op, first, second)
+    #     else:
+    #         return first
 
     @restorable
     def is_func_call(self):
