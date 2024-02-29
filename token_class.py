@@ -66,8 +66,6 @@ class Class(Enum):
     NIL = auto()
     REPEAT = auto()
     UNTIL = auto()
-    TRUE = auto()
-    FALSE = auto()
 
     BREAK = auto()
     CONTINUE = auto()

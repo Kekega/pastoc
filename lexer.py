@@ -75,8 +75,6 @@ class Lexer:
 
         while self.pos + 1 < self.len and self.text[self.pos + 1].isalnum() or self.text[self.pos + 1] == '_':
             lexeme += self.next_char()
-        if lexeme == 'program':
-            return 'program'
         if lexeme == 'if':
             return Token(Class.IF, lexeme, self.row, self.col)
         elif lexeme == 'else':
@@ -85,10 +83,6 @@ class Lexer:
             return Token(Class.WHILE, lexeme, self.row, self.col)
         elif lexeme == 'for':
             return Token(Class.FOR, lexeme, self.row, self.col)
-        # elif lexeme == 'break':
-        #     return Token(Class.BREAK, lexeme, self.row, self.col)
-        # elif lexeme == 'continue':
-        #     return Token(Class.CONTINUE, lexeme, self.row, self.col)
         elif lexeme == 'integer' or lexeme == 'char':
             return Token(Class.TYPE, lexeme, self.row, self.col)
         elif lexeme == 'begin':
@@ -139,14 +133,8 @@ class Lexer:
             return Token(Class.TYPE, lexeme, self.row, self.col)
         elif lexeme == 'xor':
             return Token(Class.XOR, lexeme, self.row, self.col)
-        elif lexeme == 'string':
-            return Token(Class.TYPE, lexeme, self.row, self.col)
         elif lexeme == 'downto':
             return Token(Class.DOWNTO, lexeme, self.row, self.col)
-        elif lexeme == 'true':
-            return Token(Class.TRUE, lexeme, self.row, self.col)
-        elif lexeme == 'false':
-            return Token(Class.FALSE, lexeme, self.row, self.col)
         elif lexeme == 'true' or lexeme == 'false':
             return Token(Class.BOOLEAN, lexeme, self.row, self.col)
         if isdigit(lexeme[0]):
@@ -281,7 +269,7 @@ class Lexer:
         last_tok_end = False
 
         curr = self.next_token()
-        assert curr == 'program'
+        assert curr.class_ == Class.PROGRAM 
         curr = self.next_token()
         assert curr.class_ == Class.ID
         curr = self.next_token()

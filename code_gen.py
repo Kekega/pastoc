@@ -58,8 +58,6 @@ class Generator(Processor):
     def process_Decl(self, parent, node):
         self.process(node, node.type_)
         self.process(node, node.id_)
-        if (isinstance(node.type_, TypeString)):
-            self.append('[100] = {0}')
 
     def process_ArrayDecl(self, parent, node):
         self.process(node, node.type_)

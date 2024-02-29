@@ -166,14 +166,6 @@ class Type(Node):
         self.value = value
 
 
-class TypeString(Node):
-    # Класс для узла строки (TypeString).
-    # Содержит значение и размер строки.
-    def __init__(self, value, size):
-        self.value = value
-        self.size = size
-
-
 class Int(Node):
     def __init__(self, value):
         self.value = value

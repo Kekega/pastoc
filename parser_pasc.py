@@ -21,25 +21,7 @@ class Parser:
         self.curr = tokens.pop(0)
         self.prev = None
 
-    overall_identifiers = {
-        'read',
-        'readln',
-        'write',
-        'writeln'
-    }
-    
-    scopes_current_vars = {'_': []}
     error_message = ""
-
-    def restorable(call):
-        @wraps(call)
-        def wrapper(self, *args, **kwargs):
-            state = pickle.dumps(self.__dict__)
-            result = call(self, *args, **kwargs)
-            self.__dict__ = pickle.loads(state)
-            return result
-
-        return wrapper
     
     def eat(self, class_):
         print(self.curr.class_)
@@ -112,7 +94,8 @@ class Parser:
         vars = []
         ids_list = []
 
-        while self.curr.class_ != Class.BEGIN:
+        while self.curr.class_ == Class.ID:
+        # while self.curr.class_ != Class.BEGIN:
 
             if (self.curr.class_ == Class.ID):
                 ids_list.append(self.curr.lexeme)
@@ -155,6 +138,7 @@ class Parser:
                             vars.append(ArrayDecl(tip, Id(x), low, high, elements))
                         self.eat(Class.SEMICOLON)
                     ids_list.clear()
+            
                     
         print(self.curr.class_)
 
@@ -238,12 +222,12 @@ class Parser:
     def id_(self):
         # <id_> ::= <FuncProcCall> | <ArrayElem> | <Assign> | <id>
         # <FuncProcCall> ::= <id> "(" <args> ")"
-        # <ArrayElem> ::= <id> "[" <logic> "]"
-        # <Assign> ::= <id> ":=" <logic>
+        # <ArrayElem> ::= <id> "[" <compare> "]"
+        # <Assign> ::= <id> ":=" <compare>
         is_array_elem = self.prev.class_ != Class.TYPE
         id_ = Id(self.curr.lexeme)
         self.eat(Class.ID)
-        if self.curr.class_ == Class.LPAREN and self.is_func_call():
+        if self.curr.class_ == Class.LPAREN: # and self.is_func_call():
             self.eat(Class.LPAREN)
             args = self.args()
             self.eat(Class.RPAREN)
@@ -255,8 +239,8 @@ class Parser:
             id_ = ArrayElem(id_, index)
         if self.curr.class_ == Class.ASSIGN:
             self.eat(Class.ASSIGN)
-            logic = self.compare()
-            return Assign(id_, logic)
+            compare = self.compare()
+            return Assign(id_, compare)
         else:
             return id_
 
@@ -267,7 +251,7 @@ class Parser:
         return id_
 
     def if_(self):
-        # <if> ::= "if" <logic> "then" (<statement> | "begin" <statement>* "end") 
+        # <if> ::= "if" <compare> "then" (<statement> | "begin" <statement>* "end") 
         #               ("else" (<statement> | "begin" <statement>* "end"))? ";"
         self.eat(Class.IF)
         cond = self.compare()
@@ -292,7 +276,7 @@ class Parser:
         return If(cond, true, false)
 
     def while_(self): 
-        # <while> ::= "while" <logic> "do" (<statement> | "begin" <statement>* "end" ";"?)
+        # <while> ::= "while" <compare> "do" (<statement> | "begin" <statement>* "end" ";"?)
         self.eat(Class.WHILE)
         cond = self.compare()
         self.eat(Class.DO)
@@ -307,12 +291,12 @@ class Parser:
         return While(cond, block)
     
     def assign(self):
-        # <assign> ::= <id> ":=" <logic>
+        # <assign> ::= <id> ":=" <compare>
         id_ = Id(self.curr.lexeme)
         self.eat(Class.ID)
         self.eat(Class.ASSIGN)
-        logic = self.compare()
-        return Assign(id_, logic)
+        compare = self.compare()
+        return Assign(id_, compare)
 
     def for_(self):
         # <for> ::= "for" <assign> ("to" | "downto") <expr> "do" (<statement> | "begin" <statement>* "end" ";")
@@ -327,7 +311,7 @@ class Parser:
             where = 'downto'
         else:
             self.die_deriv("for")
-        logic = self.expr()
+        expr = self.expr()
         self.eat(Class.DO)
         if self.curr.class_ == Class.BEGIN:
             self.eat(Class.BEGIN)
@@ -336,10 +320,10 @@ class Parser:
             self.eat(Class.SEMICOLON)
         else:
             block = self.block(multiline=False)
-        return For(init, logic, block, Where(where))
+        return For(init, expr, block, Where(where))
 
     def repeat(self):
-        # <repeat> ::= "repeat" <statement>* "until" <logic> ";"
+        # <repeat> ::= "repeat" <statement>* "until" <compare> ";"
         self.eat(Class.REPEAT)
         block = self.block(multiline=True, repeat=True)
         self.eat(Class.UNTIL)
@@ -361,10 +345,9 @@ class Parser:
             id = self.id_()
             self.eat(Class.SEMICOLON)
             return id
-        # elif self.curr.class_ == Class.UNTIL:
-        #     break
         else:
             self.die_deriv(self.block.__name__)
+
     def block(self, multiline: bool, fs = None, prs = None, repeat: bool = False):
         nodes = []
         if fs:
@@ -393,60 +376,33 @@ class Parser:
         return Params(params)
 
     def args(self):
+        # <args> ::= <compare> (":" <expr> ":" <expr>)? ("," <compare> (":" <expr> ":" <expr>)?)*
         args = []
         while self.curr.class_ != Class.RPAREN:
             if len(args) > 0:
                 self.eat(Class.COMMA)
-            logic = self.compare()
+            expr = self.compare()
 
             if (self.curr.class_ == Class.COLON):
                 self.eat(Class.COLON)
                 left = self.expr()
                 self.eat(Class.COLON)
                 right = self.expr()
-                args.append(FormattedArg(logic, left, right))
+                args.append(FormattedArg(expr, left, right))
             else:
-                args.append(logic)
+                args.append(expr)
 
         return Args(args)
 
-    def elems(self):
-        elems = []
-        while self.curr.class_ != Class.RPAREN:
-            if len(elems) > 0:
-                self.eat(Class.COMMA)
-            elems.append(self.compare())
-        return Elems(elems)
-
-    def arrayElems(self, low):
-        elems = []
-        ctr = 0
-        while self.curr.class_ != Class.RBRACE:
-            if len(elems) > 0:
-                self.eat(Class.COMMA)
-            elems.append(ArrayElem(self.compare(), ctr + low))
-            ctr += 1
-        self.eat(Class.RBRACE)
-        return Elems(elems)
-
-
     def type_(self):
-        if (self.curr.lexeme == 'string'):
-            tip = self.curr.lexeme
-            self.eat(Class.TYPE)
-            if (self.curr.class_ == Class.LBRACKET):
-                self.eat(Class.LBRACKET)
-                size = self.expr()
-                self.eat(Class.RBRACKET)
-                type_ = TypeString(tip, size)
-            else:
-                type_ = TypeString(tip, None)
-        else:
-            type_ = Type(self.curr.lexeme)
-            self.eat(Class.TYPE)
+        # <type>
+        type_ = Type(self.curr.lexeme)
+        self.eat(Class.TYPE)
         return type_
 
     def factor(self):
+        # <factor> ::= <int> | <char> | <string> | <boolean> | <real> | <id_> | 
+        #            | ("-" | "not") ("(" <compare> ")" | <factor>) | "(" <compare> ")"
         if self.curr.class_ == Class.INT:
             value = Int(self.curr.lexeme)
             self.eat(Class.INT)
@@ -469,12 +425,6 @@ class Parser:
             return value
         elif self.curr.class_ == Class.ID:
             return self.id_()
-        elif self.curr.class_ == Class.TRUE:
-            self.eat(Class.TRUE)
-            return BoolValue('true')
-        elif self.curr.class_ == Class.FALSE:
-            self.eat(Class.FALSE)
-            return BoolValue('false')
         elif self.curr.class_ in [Class.MINUS, Class.NOT]:
             op = self.curr
             self.eat(self.curr.class_)
@@ -491,12 +441,11 @@ class Parser:
             first = self.compare()
             self.eat(Class.RPAREN)
             return first
-        # elif self.curr.class_ == Class.SEMICOLON:
-        #     return None
         else:
             self.die_deriv(self.factor.__name__)
 
     def term(self):
+        # <term> ::= <factor> (("*" | "/" | "mod" | "div" | "and") <factor>)*
         first = self.factor()
         while self.curr.class_ in [Class.STAR, Class.FWDSLASH, Class.MOD, Class.DIV, Class.AND]:
             if self.curr.class_ == Class.STAR:
@@ -527,8 +476,9 @@ class Parser:
         return first
 
     def expr(self):
+        # <expr> ::= <term> (("+" | "-" | <or> | "xor") <term>)*
         first = self.term()
-        while self.curr.class_ in [Class.PLUS, Class.MINUS, Class.OR]:
+        while self.curr.class_ in [Class.PLUS, Class.MINUS, Class.OR, Class.XOR]:
             if self.curr.class_ == Class.PLUS:
                 op = self.curr.lexeme
                 self.eat(Class.PLUS)
@@ -544,9 +494,15 @@ class Parser:
                 self.eat(Class.OR)
                 second = self.term()
                 first = BinOp(op, first, second)
+            elif self.curr.class_ == Class.XOR:
+                op = self.curr.lexeme
+                self.eat(Class.XOR)
+                second = self.term()
+                first = BinOp(op, first, second)
         return first
 
     def compare(self):
+        # <compare> ::= <expr> (("=" | "<>" | "<" | ">" | "<=" | ">=") <expr>)?
         first = self.expr()
         if self.curr.class_ == Class.EQSIGN:
             op = self.curr.lexeme
@@ -580,46 +536,6 @@ class Parser:
             return BinOp(op, first, second)
         else:
             return first
-
-    # def logic(self):
-    #     first = self.compare()
-    #     if self.curr.class_ == Class.AND:
-    #         op = self.curr.lexeme
-    #         self.eat(Class.AND)
-    #         second = self.compare()
-    #         return BinOp(op, first, second)
-    #     elif self.curr.class_ == Class.OR:
-    #         op = self.curr.lexeme
-    #         self.eat(Class.OR)
-    #         second = self.compare()
-    #         if (self.curr.class_ == Class.AND):
-    #             op2 = self.curr.lexeme
-    #             self.eat(Class.AND)
-    #             third = self.compare()
-    #             return BinOp(op2, BinOp(op, first, second), third)
-    #         return BinOp(op, first, second)
-    #     elif self.curr.class_ == Class.XOR:
-    #         op = self.curr.lexeme
-    #         self.eat(Class.XOR)
-    #         second = self.compare()
-    #         return BinOp(op, first, second)
-    #     else:
-    #         return first
-
-    @restorable
-    def is_func_call(self):
-        try:
-            self.eat(Class.LPAREN)
-            self.args()
-            self.eat(Class.RPAREN)
-            if self.curr.class_ == Class.SEMICOLON:
-                self.eat(Class.SEMICOLON)
-                return self.curr.class_ != Class.BEGIN
-            else:
-                return True
-
-        except:
-            return True
 
     def parse(self):
         return self.program()
