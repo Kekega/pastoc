@@ -24,6 +24,7 @@ class Parser:
     error_message = ""
     
     def eat(self, class_):
+        print(self.curr.class_)
         if self.curr.class_ == class_:
             self.prev = self.curr
             self.curr = self.tokens.pop(0)
@@ -254,11 +255,13 @@ class Parser:
         self.eat(Class.IF)
         cond = self.compare()
         self.eat(Class.THEN)
-        
+
+        f = False
         if self.curr.class_ == Class.BEGIN:
             self.eat(Class.BEGIN)
             true = self.block(multiline=True)
             self.eat(Class.END)
+            f = True
         else:
             true = self.block(multiline=False)
         false = None
@@ -270,8 +273,9 @@ class Parser:
                 self.eat(Class.END)
                 self.eat(Class.SEMICOLON)
             else:
+                t = False
                 false = self.block(multiline=False)
-        else:
+        if f:
             self.eat(Class.SEMICOLON)
         return If(cond, true, false)
 
