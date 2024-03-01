@@ -518,8 +518,13 @@ class Generator(Processor):
         self.append(node.value)
 
     def process_BinOp(self, parent, node):
-
+        print(type(node.first))
+        t = isinstance(node.first, BinOp)
+        if t:
+            self.append('(')
         self.process(node, node.first)
+        if t:
+            self.append(')')
         if node.symbol == 'mod':
             self.append(' % ')
         elif node.symbol == 'div':
@@ -536,7 +541,12 @@ class Generator(Processor):
             self.append(' != ')
         else:
             self.append(node.symbol)
+        t = isinstance(node.second, BinOp)
+        if t:
+            self.append('(')
         self.process(node, node.second)
+        if t:
+            self.append(')')
 
     def process_UnOp(self, parent, node):
         if node.symbol == '-':
